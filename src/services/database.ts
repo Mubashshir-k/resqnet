@@ -178,42 +178,71 @@ export const storageService = {
 
     while (attempt <= MAX_RETRIES) {
       try {
-        // Strategy 2: Wrap body in a fresh Blob. 
-        // This is highly compatible and ensures content-type is matched properly.
         const uploadBody = fileBody instanceof ArrayBuffer ? new Blob([fileBody], { type: file.type }) : fileBody;
 
-        const { data, error } = await supabase.storage.from(bucket).upload(path, uploadBody, { 
-          upsert: false, // Disabling upsert simplifies the request (removes pre-flight checks)
-          contentType: file.type,
-          cacheControl: '3600',
-          // duplex: 'half' is NOT used here as it causes issues on many mobile browsers.
-        })
+        // Obtain auth session for the bearer token
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-        if (error) {
-          // If it's a network/fetch error, we retry up to MAX_RETRIES
-          const isFetchError = error.message?.includes('fetch') || error.message?.includes('Network');
-          if (isFetchError && attempt < MAX_RETRIES) {
+        if (!supabaseUrl || !supabaseAnonKey) {
+          throw new Error('Supabase configuration missing');
+        }
+
+        // Direct fetch call to bypass library quirks
+        const url = `${supabaseUrl}/storage/v1/object/${bucket}/${path}`;
+        
+        console.log(`[Storage] Direct fetch attempt ${attempt + 1} to ${url}`);
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${token || supabaseAnonKey}`,
+            'Content-Type': file.type,
+            'x-upsert': 'false'
+          },
+          body: uploadBody
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorData;
+          try { errorData = JSON.parse(errorText); } catch (e) { errorData = { message: errorText }; }
+          
+          const status = response.status;
+          const statusText = response.statusText;
+
+          // Retry logic for 5xx or fetch failures
+          if ((status >= 500 || status === 429) && attempt < MAX_RETRIES) {
             attempt++;
-            console.warn(`[Storage] Attempt ${attempt} failed with network error. Retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 1500 * attempt)); 
+            console.warn(`[Storage] Server error ${status}. Retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
             continue;
           }
-          console.error(`[Storage] Upload failed for ${bucket}/${path}:`, error);
-          return { data, error }
+
+          console.error(`[Storage] HTTP Error ${status}: ${statusText}`, errorData);
+          return { data: null, error: { message: `HTTP ${status}: ${statusText}. ${errorData.message || errorData.error || ''}` } as any };
         }
 
-        console.log(`[Storage] Upload successful for ${bucket}/${path}`, data);
-        return { data, error }
+        const data = await response.json();
+        console.log(`[Storage] Direct upload successful:`, data);
+        return { data, error: null };
+
       } catch (err: any) {
-        const isFetchError = err.message?.includes('fetch') || err.message?.includes('Network');
+        const isFetchError = err.message?.includes('fetch') || err.message?.includes('Network') || err.name === 'TypeError';
+        
         if (isFetchError && attempt < MAX_RETRIES) {
           attempt++;
-          console.warn(`[Storage] Attempt ${attempt} caught exception. Retrying...`);
-          await new Promise(resolve => setTimeout(resolve, 1500 * attempt));
+          console.warn(`[Storage] Network exception during direct fetch. Retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
           continue;
         }
-        console.error(`[Storage] Unexpected error during upload to ${bucket}/${path}:`, err);
-        return { data: null, error: err }
+        
+        console.error(`[Storage] Direct fetch exception:`, err);
+        return { data: null, error: err };
       }
     }
     

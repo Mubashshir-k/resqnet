@@ -28,9 +28,17 @@ export const notifyPopup = ({
 
   useUIStore.getState().addNotification({ title, message, variant })
 
-  // Browser-level popup notification (when user granted permission).
+  // Browser-level popup notification (only if supported and not throwing).
   if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body: message || '' })
+    try {
+      // Direct constructor call often fails on certain mobile browsers on the main thread.
+      // We skip this purely browser-level thing on mobile and rely on our in-app toasts.
+      if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        new Notification(title, { body: message || '' })
+      }
+    } catch (e) {
+      console.warn('Browser notification failed (expected on some mobile devices):', e)
+    }
   }
 }
 
