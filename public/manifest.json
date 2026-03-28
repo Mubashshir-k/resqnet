@@ -1,0 +1,16 @@
+{
+  "name": "ResQNet",
+  "short_name": "ResQNet",
+  "description": "AI Disaster Response System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#E53935",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}
