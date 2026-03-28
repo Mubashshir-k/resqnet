@@ -40,7 +40,7 @@ export const supabaseAuth = {
   },
 
   signIn: async (email: string, password: string) => {
-    return handleAuthLock(async () => {
+return handleAuthLock(async () => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
