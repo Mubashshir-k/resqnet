@@ -60,7 +60,7 @@ export default function DashboardPage() {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             notifyPopup({
-              title: '📋 New assignment received',
+              title: 'New assignment received',
               message: 'An admin assigned an incident to you.',
               variant: 'success',
             })
@@ -173,7 +173,7 @@ export default function DashboardPage() {
         if (reportError) throw reportError
         
         notifyPopup({
-          title: '✅ Task completed',
+          title: 'Task completed',
           message: 'Admin has been notified of completion.',
           variant: 'success',
         })

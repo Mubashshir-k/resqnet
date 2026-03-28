@@ -30,13 +30,13 @@ export default function MyReportsPage() {
             if (previous && previous !== report.status) {
               if (report.status === 'assigned') {
                 notifyPopup({
-                  title: '👷 Volunteer assigned',
+                  title: 'Volunteer assigned',
                   message: `Your report "${report.title}" is now assigned.`,
                   variant: 'success',
                 })
               } else if (report.status === 'resolved') {
                 notifyPopup({
-                  title: '✅ Incident resolved',
+                  title: 'Incident resolved',
                   message: `Your report "${report.title}" has been marked as resolved.`,
                   variant: 'success',
                 })

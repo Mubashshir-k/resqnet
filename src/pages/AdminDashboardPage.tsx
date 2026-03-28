@@ -85,7 +85,7 @@ export default function AdminDashboardPage() {
             const newlyArrived = data.filter((r) => !knownReportIdsRef.current.has(r.id))
             if (newlyArrived.length > 0) {
               notifyPopup({
-                title: '🚨 New incident reported',
+                title: 'New incident reported',
                 message:
                   newlyArrived.length === 1
                     ? 'A user submitted a new report.'
@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
           // Keep this for immediate realtime signal; fetchReports fallback avoids misses.
           if (!payload.new?.id || !knownReportIdsRef.current.has(payload.new.id)) {
             notifyPopup({
-              title: '🚨 New incident reported',
+              title: 'New incident reported',
               message: 'A user submitted a new report.',
               variant: 'success',
             })
@@ -121,7 +121,7 @@ export default function AdminDashboardPage() {
         }
         if (payload.eventType === 'UPDATE' && payload.new?.status === 'resolved') {
           notifyPopup({
-            title: '✅ Incident completed',
+            title: 'Incident completed',
             message: 'A volunteer marked an assigned incident as completed.',
             variant: 'success',
           })
@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
       setJustAssignedReportId(reportId)
       setTimeout(() => setJustAssignedReportId(null), 1800)
       notifyPopup({
-        title: '📋 Volunteer assigned',
+        title: 'Volunteer assigned',
         message: 'Task was dispatched successfully.',
         variant: 'success',
       })

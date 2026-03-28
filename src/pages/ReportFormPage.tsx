@@ -168,7 +168,7 @@ export default function ReportFormPage() {
 
       console.log('[ReportForm] Submission successful, redirecting...');
       notifyPopup({
-        title: '🚨 Incident submitted',
+        title: 'Incident submitted',
         message: 'Your report was sent to the response team.',
         variant: 'success',
       })
@@ -197,36 +197,44 @@ export default function ReportFormPage() {
               </div>
             )}
 
-            <Input
-              label="Title *"
-              placeholder="Brief title of the incident"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-            />
-            <p className={`-mt-4 text-xs ${formData.title.trim().length >= MIN_TITLE_LEN ? 'text-green-600' : 'text-gray-500'}`}>
-              {formData.title.trim().length}/{MIN_TITLE_LEN}+ characters
-            </p>
+            {/* Details Section */}
+            <div className="space-y-6">
+              <div>
+                <Input
+                  label="Title *"
+                  placeholder="Brief title of the incident"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                />
+                <p className={`mt-1.5 text-[11px] font-medium ${formData.title.trim().length >= MIN_TITLE_LEN ? 'text-green-600' : 'text-gray-400'}`}>
+                  {formData.title.trim().length}/{MIN_TITLE_LEN}+ characters
+                </p>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
-              </label>
-              <textarea
-                placeholder="Describe the incident in detail (AI will analyze this)"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                required
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none h-32 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
-              />
-              <p className={`mt-1 text-xs ${formData.description.trim().length >= MIN_DESC_LEN ? 'text-green-600' : 'text-gray-500'}`}>
-                {formData.description.trim().length}/{MIN_DESC_LEN}+ characters
-              </p>
-              <p className="mt-1 text-xs text-gray-500">Tip: include what happened, severity, and nearby landmarks.</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  placeholder="Describe the incident in detail (AI will analyze this)"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all duration-200 resize-none h-32 bg-white dark:bg-slate-900/50 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                />
+                <div className="mt-1.5 flex items-center justify-between">
+                  <p className={`text-[11px] font-medium ${formData.description.trim().length >= MIN_DESC_LEN ? 'text-green-600' : 'text-gray-400'}`}>
+                    {formData.description.trim().length}/{MIN_DESC_LEN}+ characters
+                  </p>
+                  <p className="text-[11px] text-gray-400 italic font-medium">✨ Tip: include severity and nearby landmarks.</p>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            {/* Media Section */}
+            <div className="pt-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Image (Optional)
               </label>
               <div className="relative group">
@@ -240,16 +248,16 @@ export default function ReportFormPage() {
                 {!image ? (
                   <label
                     htmlFor="image-upload"
-                    className="flex flex-col items-center justify-center w-full h-32 px-4 transition-all duration-200 bg-white border-2 border-gray-300 border-dashed rounded-xl cursor-pointer hover:border-primary-500 hover:bg-primary-50 hover:shadow-sm"
+                    className="flex flex-col items-center justify-center w-full h-36 px-4 transition-all duration-300 bg-slate-50/50 dark:bg-slate-900/30 border-2 border-slate-200 dark:border-slate-800 border-dashed rounded-2xl cursor-pointer hover:border-primary-400 hover:bg-white dark:hover:bg-slate-900/50 group/upload"
                   >
-                    <div className="flex flex-col items-center space-y-2">
-                      <div className="p-3 bg-primary-50 rounded-full group-hover:bg-primary-100 transition-colors">
+                    <div className="flex flex-col items-center space-y-3">
+                      <div className="p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 group-hover/upload:scale-110 transition-transform duration-300">
                         <ImagePlus className="w-6 h-6 text-primary-500" />
                       </div>
-                      <span className="font-medium text-gray-600">
-                        Click to upload <span className="text-gray-400 font-normal">or drag and drop</span>
-                      </span>
-                      <span className="text-xs text-gray-400">SVG, PNG, JPG or GIF (max. 5MB)</span>
+                      <div className="text-center">
+                        <p className="font-bold text-gray-700 dark:text-gray-300 tracking-tight">Click to upload <span className="text-gray-400 font-normal underline decoration-slate-200 underline-offset-4">image</span></p>
+                        <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">SVG, PNG, JPG (max 5mb)</p>
+                      </div>
                     </div>
                   </label>
                 ) : (
@@ -311,7 +319,7 @@ export default function ReportFormPage() {
                 />
               </MapContainer>
             </div>
-            <p className="text-sm font-medium text-blue-800 mt-1 mb-4 text-center bg-blue-50 py-2.5 rounded border border-blue-100 shadow-sm">
+            <p className="text-xs font-semibold text-gray-400/80 mt-2 mb-6 text-center italic tracking-tight">
               👉 Click anywhere on the map above to select your exact location
             </p>
 
@@ -326,15 +334,15 @@ export default function ReportFormPage() {
               {gettingLocation ? 'Getting Location...' : 'Use Current Location'}
             </Button>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-900">
-                <strong>✨ AI-Powered:</strong> Our AI will automatically categorize your report and assign a priority
+            <div className="pb-4">
+              <p className="text-xs text-gray-400/80 leading-relaxed font-medium">
+                <span className="text-gray-600/90 font-bold tracking-tight">✨ AI-Powered:</span> Our AI will automatically categorize your report and assign a priority
                 score based on the description you provide.
               </p>
             </div>
 
-            <Button type="submit" size="lg" isLoading={loading} className="w-full">
-              {loading ? 'Submitting...' : '📤 Submit Report'}
+            <Button type="submit" size="lg" isLoading={loading} className="w-full !rounded-2xl shadow-lg shadow-primary-500/20 py-4 font-black tracking-tight text-lg">
+              {loading ? 'Submitting...' : '🚀 Submit Report'}
             </Button>
           </form>
         </Card>

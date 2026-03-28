@@ -22,9 +22,9 @@ export default function Input({
       <input
         {...props}
         id={id}
-        className={`w-full px-4 py-2.5 sm:text-sm text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${
-          error ? 'border-red-500' : 'border-gray-200'
-        } bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 ${className}`}
+        className={`w-full px-4 py-3 sm:text-sm text-base border rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all duration-200 ${
+          error ? 'border-red-500 bg-red-50/30' : 'border-slate-200 bg-white dark:bg-slate-900/50'
+        } text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${className}`}
       />
       {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
     </div>
