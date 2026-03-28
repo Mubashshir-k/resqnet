@@ -119,17 +119,28 @@ export default function ReportFormPage() {
       // 4. Image Upload
       let imageUrl = ''
       if (image) {
+        console.log('[ReportForm] Image details:', {
+          name: image.name,
+          size: image.size,
+          type: image.type,
+          instanceOfFile: image instanceof File,
+          instanceOfBlob: image instanceof Blob
+        });
+
         const timestamp = Date.now()
         const cleanFileName = image.name.replace(/[^a-zA-Z0-9.]/g, '_');
         // Structure: reports/public/{user_id}/{timestamp}-{filename}
         const path = `public/${sessionUser.id}/${timestamp}-${cleanFileName}`;
         
-        console.log(`[ReportForm] Attempting image upload: ${path}`);
-        const { error: uploadError } = await storageService.uploadImage('reports', path, image)
+        console.log(`[ReportForm] Attempting image upload to: ${path}`);
+        
+        // Final attempt at making this bulletproof: Catch the error and display more context
+        const { error: uploadError } = await storageService.uploadImage('reports', path, image);
         
         if (uploadError) {
-          console.error('[ReportForm] Storage upload failed:', uploadError);
-          throw new Error(`Storage Error: ${uploadError.message}. This often happens on mobile if the connection is unstable or RLS is misconfigured.`);
+          console.error('[ReportForm] Storage upload failed error object:', uploadError);
+          const errorMsg = uploadError.message || 'Unknown Storage Error';
+          throw new Error(`Storage Error: ${errorMsg}. Your phone might be blocking the connection or using an old version of the app. Look for v0.1.5 in the header!`);
         }
         
         imageUrl = storageService.getPublicUrl('reports', path)
