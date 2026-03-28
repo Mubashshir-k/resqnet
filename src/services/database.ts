@@ -161,11 +161,14 @@ export const storageService = {
     });
 
     try {
-      const { data, error } = await supabase.storage.from(bucket).upload(path, file, { 
+      // Mobile browsers (specifically Android Chrome & iOS Safari) often terminate the connection 
+      // or throw "Failed to fetch" when trying to upload raw File/Blob objects due to stream handling.
+      // Converting to ArrayBuffer ensures a robust static payload upload.
+      const arrayBuffer = await file.arrayBuffer()
+
+      const { data, error } = await supabase.storage.from(bucket).upload(path, arrayBuffer, { 
         upsert: true,
         contentType: file.type,
-        // Removed duplex: 'half' as it throws TypeError: Failed to fetch on many mobile browsers 
-        // that do not support streaming request bodies yet.
       })
 
       if (error) {
