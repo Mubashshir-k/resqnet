@@ -154,34 +154,64 @@ export const assignmentsService = {
 // Storage
 export const storageService = {
   uploadImage: async (bucket: string, path: string, file: File) => {
+    const MAX_RETRIES = 2;
+    let attempt = 0;
+
     console.log(`[Storage] Uploading to ${bucket}/${path}`, {
       size: file.size,
       type: file.type,
       name: file.name
     });
 
+    // Strategy 1: Convert File to ArrayBuffer immediately.
+    // This is the most reliable way on mobile browsers as it prevents
+    // the "file could not be read" error caused by losing the file stream/reference.
+    let fileBody: ArrayBuffer | File = file;
     try {
-      // Mobile browsers (specifically Android Chrome & iOS Safari) often terminate the connection 
-      // or throw "Failed to fetch" when trying to upload raw File/Blob objects due to stream handling.
-      // Converting to ArrayBuffer ensures a robust static payload upload.
-      const arrayBuffer = await file.arrayBuffer()
-
-      const { data, error } = await supabase.storage.from(bucket).upload(path, arrayBuffer, { 
-        upsert: true,
-        contentType: file.type,
-      })
-
-      if (error) {
-        console.error(`[Storage] Upload failed for ${bucket}/${path}:`, error);
-      } else {
-        console.log(`[Storage] Upload successful for ${bucket}/${path}`, data);
-      }
-
-      return { data, error }
-    } catch (err: any) {
-      console.error(`[Storage] Unexpected error during upload to ${bucket}/${path}:`, err);
-      return { data: null, error: err }
+      fileBody = await file.arrayBuffer();
+      console.log(`[Storage] Successfully converted file to ArrayBuffer (${fileBody.byteLength} bytes)`);
+    } catch (readErr: any) {
+      console.warn(`[Storage] Failed to convert to ArrayBuffer, falling back to File object:`, readErr);
+      // Fallback to the original File object if conversion fails for some reason
+      fileBody = file;
     }
+
+    while (attempt <= MAX_RETRIES) {
+      try {
+        const { data, error } = await supabase.storage.from(bucket).upload(path, fileBody, { 
+          upsert: true,
+          contentType: file.type,
+          // duplex: 'half' is NOT used here as it causes issues on many mobile browsers.
+        })
+
+        if (error) {
+          // If it's a network/fetch error, we might want to retry
+          if (error.message?.includes('Failed to fetch') && attempt < MAX_RETRIES) {
+            attempt++;
+            console.warn(`[Storage] Attempt ${attempt} failed with "Failed to fetch". Retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+            continue;
+          }
+          console.error(`[Storage] Upload failed for ${bucket}/${path}:`, error);
+          return { data, error }
+        }
+
+        console.log(`[Storage] Upload successful for ${bucket}/${path}`, data);
+        return { data, error }
+      } catch (err: any) {
+        // TypeError: Failed to fetch or network errors caught here
+        if (err.message?.includes('Failed to fetch') && attempt < MAX_RETRIES) {
+          attempt++;
+          console.warn(`[Storage] Attempt ${attempt} caught exception "Failed to fetch". Retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        console.error(`[Storage] Unexpected error during upload to ${bucket}/${path}:`, err);
+        return { data: null, error: err }
+      }
+    }
+    
+    return { data: null, error: new Error('Upload failed after multiple retries') as any }
   },
 
   getPublicUrl: (bucket: string, path: string) => {
