@@ -161,16 +161,11 @@ export const storageService = {
     });
 
     try {
-      // Converting to ArrayBuffer is crucial for mobile browser compatibility (Android/iOS)
-      // to avoid "Failed to fetch" errors when streaming large Blobs/Files directly.
-      const arrayBuffer = await file.arrayBuffer();
-      
-      const { data, error } = await supabase.storage.from(bucket).upload(path, arrayBuffer, { 
+      const { data, error } = await supabase.storage.from(bucket).upload(path, file, { 
         upsert: true,
         contentType: file.type,
-        // duplex: 'half' is still good practice for fetch-based uploads
-        // @ts-ignore
-        duplex: 'half'
+        // Removed duplex: 'half' as it throws TypeError: Failed to fetch on many mobile browsers 
+        // that do not support streaming request bodies yet.
       })
 
       if (error) {
