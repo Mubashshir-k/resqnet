@@ -105,13 +105,12 @@ export async function analyzeDisasterReport(description: string): Promise<AIAnal
   } catch (error: any) {
     const isQuotaError = error?.status === 429 || error?.message?.includes('quota') || error?.code === 'insufficient_quota'
     
-    if (isQuotaError) {
-      console.warn('⚠️ OpenAI Quota Exceeded (429). Switching to Local Fallback Analysis.')
-    } else {
-      console.error('AI Analysis Error:', error)
-    }
-    
-    // Return the local keyword-based fallback instead of a hardcoded default
-    return localFallbackAnalysis(description)
+      if (isQuotaError) {
+        // Log a subtle message since we handle it with a fallback
+        console.warn('ℹ️ OpenAI Quota Exceeded. Using keyword-based analysis fallback.');
+      } else {
+        console.error('AI Analysis Error:', error);
+      }
+      return localFallbackAnalysis(description);
   }
 }

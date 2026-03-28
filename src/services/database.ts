@@ -160,20 +160,30 @@ export const storageService = {
       name: file.name
     });
 
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, { 
-      upsert: true,
-      // duplex: 'half' is critical for fetch-based uploads on some mobile browsers
-      // @ts-ignore - duplex is a valid but sometimes unrecognized option in some types
-      duplex: 'half'
-    })
+    try {
+      // Converting to ArrayBuffer is crucial for mobile browser compatibility (Android/iOS)
+      // to avoid "Failed to fetch" errors when streaming large Blobs/Files directly.
+      const arrayBuffer = await file.arrayBuffer();
+      
+      const { data, error } = await supabase.storage.from(bucket).upload(path, arrayBuffer, { 
+        upsert: true,
+        contentType: file.type,
+        // duplex: 'half' is still good practice for fetch-based uploads
+        // @ts-ignore
+        duplex: 'half'
+      })
 
-    if (error) {
-      console.error(`[Storage] Upload failed for ${bucket}/${path}:`, error);
-    } else {
-      console.log(`[Storage] Upload successful for ${bucket}/${path}`, data);
+      if (error) {
+        console.error(`[Storage] Upload failed for ${bucket}/${path}:`, error);
+      } else {
+        console.log(`[Storage] Upload successful for ${bucket}/${path}`, data);
+      }
+
+      return { data, error }
+    } catch (err: any) {
+      console.error(`[Storage] Unexpected error during upload to ${bucket}/${path}:`, err);
+      return { data: null, error: err }
     }
-
-    return { data, error }
   },
 
   getPublicUrl: (bucket: string, path: string) => {
