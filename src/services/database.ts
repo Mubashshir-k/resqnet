@@ -154,7 +154,25 @@ export const assignmentsService = {
 // Storage
 export const storageService = {
   uploadImage: async (bucket: string, path: string, file: File) => {
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
+    console.log(`[Storage] Uploading to ${bucket}/${path}`, {
+      size: file.size,
+      type: file.type,
+      name: file.name
+    });
+
+    const { data, error } = await supabase.storage.from(bucket).upload(path, file, { 
+      upsert: true,
+      // duplex: 'half' is critical for fetch-based uploads on some mobile browsers
+      // @ts-ignore - duplex is a valid but sometimes unrecognized option in some types
+      duplex: 'half'
+    })
+
+    if (error) {
+      console.error(`[Storage] Upload failed for ${bucket}/${path}:`, error);
+    } else {
+      console.log(`[Storage] Upload successful for ${bucket}/${path}`, data);
+    }
+
     return { data, error }
   },
 

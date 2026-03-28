@@ -6,6 +6,49 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true,
 })
 
+function localFallbackAnalysis(description: string): AIAnalysisResult {
+  const desc = description.toLowerCase()
+  
+  // Simple keyword-based categorization
+  if (desc.includes('fire') || desc.includes('smoke') || desc.includes('burn') || desc.includes('explosion') || desc.includes('blaze')) {
+    return {
+      category: 'fire',
+      priority_score: 85,
+      reason: 'Detected fire-related keywords (Local Fallback)'
+    }
+  }
+  
+  if (desc.includes('injur') || desc.includes('blood') || desc.includes('bleed') || desc.includes('medical') || desc.includes('hospital') || desc.includes('ambulance') || desc.includes('hurt') || desc.includes('wound') || desc.includes('unconscious')) {
+    return {
+      category: 'medical',
+      priority_score: 90,
+      reason: 'Detected medical-related keywords (Local Fallback)'
+    }
+  }
+  
+  if (desc.includes('crash') || desc.includes('accident') || desc.includes('car') || desc.includes('collision') || desc.includes('truck') || desc.includes('traffic')) {
+    return {
+      category: 'accident',
+      priority_score: 70,
+      reason: 'Detected accident-related keywords (Local Fallback)'
+    }
+  }
+  
+  if (desc.includes('flood') || desc.includes('water') || desc.includes('river') || desc.includes('rain') || desc.includes('drown') || desc.includes('sink') || desc.includes('overflow')) {
+    return {
+      category: 'flood',
+      priority_score: 75,
+      reason: 'Detected flood-related keywords (Local Fallback)'
+    }
+  }
+  
+  return {
+    category: 'other',
+    priority_score: 50,
+    reason: 'Generic categorization as no specific keywords matched (Local Fallback)'
+  }
+}
+
 export async function analyzeDisasterReport(description: string): Promise<AIAnalysisResult> {
   try {
     const response = await openai.chat.completions.create({
@@ -59,20 +102,16 @@ export async function analyzeDisasterReport(description: string): Promise<AIAnal
     }
 
     return result
-  } catch (error) {
-    console.error('AI Analysis Error:', error)
+  } catch (error: any) {
+    const isQuotaError = error?.status === 429 || error?.message?.includes('quota') || error?.code === 'insufficient_quota'
     
-    // Log more details for debugging
-    if (error instanceof Error) {
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
+    if (isQuotaError) {
+      console.warn('⚠️ OpenAI Quota Exceeded (429). Switching to Local Fallback Analysis.')
+    } else {
+      console.error('AI Analysis Error:', error)
     }
     
-    // Return a default safe response
-    return {
-      category: 'other',
-      priority_score: 50,
-      reason: 'Unable to analyze - please provide more details',
-    }
+    // Return the local keyword-based fallback instead of a hardcoded default
+    return localFallbackAnalysis(description)
   }
 }

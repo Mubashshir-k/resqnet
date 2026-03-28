@@ -86,7 +86,21 @@ export default function ReportFormPage() {
     setLoading(true)
 
     try {
-      if (!user) throw new Error('Not authenticated')
+      console.log('[ReportForm] Starting submission...');
+
+      // 1. Double-check authentication state
+      const { data: { user: currentUser }, error: authCheckError } = await useAuthStore.getState().checkAuth().then(() => ({ data: { user: useAuthStore.getState().user }, error: null }));
+      if (authCheckError) console.warn('[ReportForm] Auth check error:', authCheckError);
+      
+      const sessionUser = currentUser || user;
+      if (!sessionUser) {
+        console.error('[ReportForm] No authenticated user found');
+        throw new Error('Not authenticated. Please login again.');
+      }
+
+      console.log('[ReportForm] User authenticated:', sessionUser.id);
+
+      // 2. Form validation
       if (!formData.title || !formData.description) {
         throw new Error('Please fill in all required fields')
       }
@@ -97,24 +111,35 @@ export default function ReportFormPage() {
         throw new Error(`Description must be at least ${MIN_DESC_LEN} characters`)
       }
 
-      // Get AI analysis
+      // 3. AI Analysis
+      console.log('[ReportForm] Requesting AI analysis...');
       const aiResult = await analyzeDisasterReport(formData.description)
+      console.log('[ReportForm] AI analysis complete:', aiResult);
 
-      // Upload image if provided
+      // 4. Image Upload
       let imageUrl = ''
       if (image) {
         const timestamp = Date.now()
-        const path = `reports/${user.id}/${timestamp}-${image.name}`
+        const cleanFileName = image.name.replace(/[^a-zA-Z0-9.]/g, '_');
+        // Structure: reports/public/{user_id}/{timestamp}-{filename}
+        const path = `public/${sessionUser.id}/${timestamp}-${cleanFileName}`;
+        
+        console.log(`[ReportForm] Attempting image upload: ${path}`);
         const { error: uploadError } = await storageService.uploadImage('reports', path, image)
+        
         if (uploadError) {
-          throw new Error(`Storage Error: ${uploadError.message}. Did you add RLS policies to the 'reports' bucket?`)
+          console.error('[ReportForm] Storage upload failed:', uploadError);
+          throw new Error(`Storage Error: ${uploadError.message}. This often happens on mobile if the connection is unstable or RLS is misconfigured.`);
         }
+        
         imageUrl = storageService.getPublicUrl('reports', path)
+        console.log('[ReportForm] Image upload successful, URL:', imageUrl);
       }
 
-      // Create report
+      // 5. Database Record Creation
+      console.log('[ReportForm] Creating report entry in database...');
       const { error: createError } = await reportsService.create({
-        user_id: user.id,
+        user_id: sessionUser.id,
         title: formData.title,
         description: formData.description,
         image_url: imageUrl,
@@ -126,9 +151,11 @@ export default function ReportFormPage() {
       })
 
       if (createError) {
-        throw new Error(`Database Error: ${createError.message}. Please check RLS policies on 'reports' table.`)
+        console.error('[ReportForm] Database creation failed:', createError);
+        throw new Error(`Database Error: ${createError.message}. Your image was uploaded, but the report details could not be saved.`);
       }
 
+      console.log('[ReportForm] Submission successful, redirecting...');
       notifyPopup({
         title: '🚨 Incident submitted',
         message: 'Your report was sent to the response team.',
@@ -136,6 +163,7 @@ export default function ReportFormPage() {
       })
       navigate('/my-reports')
     } catch (err: any) {
+      console.error('[ReportForm] Caught error during submission:', err);
       setError(err.message || 'Failed to submit report')
     } finally {
       setLoading(false)
