@@ -1,0 +1,15 @@
+--- USERS ---
+citizen@test.com: user (1242577d-2df2-4fa0-af4e-4f73148f4eab)
+mubashshirk7666@gmail.com: admin (e75a3e15-708e-4693-b91a-a9e9742c92f1)
+sohel@gmail.com: volunteer (f6a193c7-f7a5-4585-9fb0-9ae472cdb91c)
+sannu@gmail.com: user (5f27ae36-9ea7-4cdb-9c0b-9b005dacac23)
+sareem@gmail.com: user (25faf1f6-f57b-496f-9aac-c4a0acfb03c5)
+sareem2@gmail.com: volunteer (83cbed26-6372-4721-ab74-a52de3a6bf49)
+umed@gmail.com: volunteer (81a25977-da30-4883-b6ed-76ee27428440)
+testvolunteer@example.com: volunteer (650ddba9-7dad-42d1-8a7c-745536caecb7)
+requester_test@example.com: user (3edbb5c1-b229-4c52-8aa3-0caa69fdf6c5)
+
+--- REPORTS ---
+96637cfb-249d-44d9-84cc-2802841570ff: fdsfsds [pending] (User: f6a193c7-f7a5-4585-9fb0-9ae472cdb91c)
+
+--- ASSIGNMENTS ---
