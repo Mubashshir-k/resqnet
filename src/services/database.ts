@@ -178,18 +178,24 @@ export const storageService = {
 
     while (attempt <= MAX_RETRIES) {
       try {
-        const { data, error } = await supabase.storage.from(bucket).upload(path, fileBody, { 
-          upsert: true,
+        // Strategy 2: Wrap body in a fresh Blob. 
+        // This is highly compatible and ensures content-type is matched properly.
+        const uploadBody = fileBody instanceof ArrayBuffer ? new Blob([fileBody], { type: file.type }) : fileBody;
+
+        const { data, error } = await supabase.storage.from(bucket).upload(path, uploadBody, { 
+          upsert: false, // Disabling upsert simplifies the request (removes pre-flight checks)
           contentType: file.type,
+          cacheControl: '3600',
           // duplex: 'half' is NOT used here as it causes issues on many mobile browsers.
         })
 
         if (error) {
-          // If it's a network/fetch error, we might want to retry
-          if (error.message?.includes('Failed to fetch') && attempt < MAX_RETRIES) {
+          // If it's a network/fetch error, we retry up to MAX_RETRIES
+          const isFetchError = error.message?.includes('fetch') || error.message?.includes('Network');
+          if (isFetchError && attempt < MAX_RETRIES) {
             attempt++;
-            console.warn(`[Storage] Attempt ${attempt} failed with "Failed to fetch". Retrying...`);
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+            console.warn(`[Storage] Attempt ${attempt} failed with network error. Retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 1500 * attempt)); 
             continue;
           }
           console.error(`[Storage] Upload failed for ${bucket}/${path}:`, error);
@@ -199,11 +205,11 @@ export const storageService = {
         console.log(`[Storage] Upload successful for ${bucket}/${path}`, data);
         return { data, error }
       } catch (err: any) {
-        // TypeError: Failed to fetch or network errors caught here
-        if (err.message?.includes('Failed to fetch') && attempt < MAX_RETRIES) {
+        const isFetchError = err.message?.includes('fetch') || err.message?.includes('Network');
+        if (isFetchError && attempt < MAX_RETRIES) {
           attempt++;
-          console.warn(`[Storage] Attempt ${attempt} caught exception "Failed to fetch". Retrying...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          console.warn(`[Storage] Attempt ${attempt} caught exception. Retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1500 * attempt));
           continue;
         }
         console.error(`[Storage] Unexpected error during upload to ${bucket}/${path}:`, err);
