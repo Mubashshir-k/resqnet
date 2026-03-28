@@ -30,18 +30,7 @@ export const notifyPopup = ({
 
   // Browser-level popup notification (when user granted permission).
   if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-    try {
-      new Notification(title, { body: message || '' })
-    } catch (e) {
-      // Android Chrome throws "Illegal constructor" and requires service worker for notifications
-      if (navigator.serviceWorker) {
-        navigator.serviceWorker.getRegistration().then((reg) => {
-          if (reg) {
-            reg.showNotification(title, { body: message || '' })
-          }
-        }).catch(err => console.error('Failed to show notification via Service Worker', err))
-      }
-    }
+    new Notification(title, { body: message || '' })
   }
 }
 
