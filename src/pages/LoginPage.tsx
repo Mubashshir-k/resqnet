@@ -31,24 +31,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-gray-50 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary-500 mb-2">ResQNet</h1>
-          <p className="text-gray-600">AI Disaster Response System</p>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50/40 via-white to-gray-50/40 flex items-center justify-center px-4 py-8">
+      <Card variant="elevated" className="w-full max-w-md">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-4 shadow-lg shadow-primary-500/30">
+            <span className="text-2xl font-bold text-white">+</span>
+          </div>
+          <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">ResQNet</h1>
+          <p className="text-gray-600 text-lg font-medium">AI Disaster Response</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-4 bg-gradient-to-r from-red-50 to-red-100/50 border-l-4 border-red-500 rounded-xl text-red-700 text-sm font-semibold">
+              <p className="font-bold mb-1">Login Failed</p>
               {error}
             </div>
           )}
 
           <Input
             type="email"
-            placeholder="Email address"
-            label="Email"
+            placeholder="you@example.com"
+            label="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -56,23 +60,25 @@ export default function LoginPage() {
 
           <Input
             type="password"
-            placeholder="Password"
+            placeholder="••••••••"
             label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
 
-          <Button type="submit" size="lg" isLoading={loading} className="w-full mt-6">
-            Sign In
+          <Button type="submit" size="lg" isLoading={loading} className="w-full mt-8 shadow-lg shadow-primary-500/20">
+            {loading ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/signup" className="text-primary-500 hover:underline font-semibold">
-            Sign up
-          </Link>
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <p className="text-center text-gray-600 text-sm font-medium">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-bold underline underline-offset-2 transition-colors">
+              Create one
+            </Link>
+          </p>
         </div>
       </Card>
     </div>
