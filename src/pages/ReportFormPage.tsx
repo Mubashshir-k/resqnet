@@ -63,19 +63,63 @@ export default function ReportFormPage() {
       return
     }
 
+    // Check if we're on a secure context
+    if (!window.isSecureContext) {
+      setError('Location requires HTTPS. Try refreshing or using desktop (localhost:3001).')
+      return
+    }
+
     setGettingLocation(true)
-    navigator.geolocation.getCurrentPosition(
+    console.log('[ReportForm] Requesting GPS location with 10s timeout...')
+    
+    // Set a timeout to fail fast if GPS is taking too long
+    const timeoutId = setTimeout(() => {
+      navigator.geolocation.clearWatch(watchId)
+      setError('Location request timed out. Please try again or click on the map.')
+      setGettingLocation(false)
+    }, 10000)
+    
+    const watchId = navigator.geolocation.getCurrentPosition(
       (position) => {
+        clearTimeout(timeoutId)
+        console.log('[ReportForm] GPS location acquired:', {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        })
         setFormData((prev) => ({
           ...prev,
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         }))
         setGettingLocation(false)
+        setError('')
       },
-      () => {
-        setError('Failed to get location')
+      (error) => {
+        clearTimeout(timeoutId)
+        let errorMsg = 'Failed to get location'
+        
+        if (error.code === error.PERMISSION_DENIED) {
+          // Check if it's a secure origin issue
+          if (error.message?.includes('secure origin')) {
+            errorMsg = 'Location requires HTTPS. Try refreshing the page or use desktop: https://localhost:3001'
+          } else {
+            errorMsg = 'Location permission denied. Enable location access in settings and try again.'
+          }
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          errorMsg = 'Location unavailable. Try clicking on the map to select location manually.'
+        } else if (error.code === error.TIMEOUT) {
+          errorMsg = 'Location request timed out. Try clicking on the map instead.'
+        }
+        
+        console.warn('[ReportForm] Geolocation error:', { code: error.code, message: error.message, isSecureContext: window.isSecureContext })
+        setError(errorMsg)
         setGettingLocation(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
       }
     )
   }

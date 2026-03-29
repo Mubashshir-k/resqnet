@@ -154,9 +154,9 @@ export const assignmentsService = {
 // Storage
 export const storageService = {
   uploadImage: async (bucket: string, path: string, file: File) => {
-    const UPLOAD_TIMEOUT = 30000; // 30 seconds for mobile networks
-    const MAX_RETRIES = 2;
-    let sdkAttempt = 0;
+    const UPLOAD_TIMEOUT = 40000;
+    const MAX_RETRIES = 3;
+    let attempt = 0;
 
     console.log(`[Storage] Uploading to ${bucket}/${path}`, {
       size: file.size,
@@ -164,26 +164,16 @@ export const storageService = {
       name: file.name
     });
 
-    // Convert File to ArrayBuffer to prevent mobile file stream issues
-    let fileBody: ArrayBuffer | File = file;
-    try {
-      fileBody = await file.arrayBuffer();
-      console.log(`[Storage] Successfully converted file to ArrayBuffer (${fileBody.byteLength} bytes)`);
-    } catch (readErr: any) {
-      console.warn(`[Storage] Failed to convert to ArrayBuffer, falling back to File object:`, readErr);
-      fileBody = file;
-    }
+    // On mobile, DON'T try to read file - use File object directly
+    // Reading causes permission errors and ERR_UPLOAD_FILE_CHANGED
+    const uploadBody = file;
+    console.log(`[Storage] Using File object directly (size: ${file.size} bytes)`);
 
-    // Phase 1: Use Supabase SDK (most reliable on mobile)
-    while (sdkAttempt <= MAX_RETRIES) {
+    // Try upload with retries
+    while (attempt <= MAX_RETRIES) {
       try {
-        const uploadBody = fileBody instanceof ArrayBuffer 
-          ? new Blob([fileBody], { type: file.type }) 
-          : fileBody;
+        console.log(`[Storage] Attempt ${attempt + 1}/${MAX_RETRIES + 1} - Using Supabase SDK`);
 
-        console.log(`[Storage] Supabase SDK upload attempt ${sdkAttempt + 1}/${MAX_RETRIES + 1}`);
-
-        // Wrap sdk call with timeout
         const uploadPromise = supabase.storage
           .from(bucket)
           .upload(path, uploadBody, {
@@ -192,121 +182,47 @@ export const storageService = {
           });
 
         const timeoutPromise = new Promise<any>((_, reject) =>
-          setTimeout(() => reject(new Error('Upload timeout after 30s')), UPLOAD_TIMEOUT)
+          setTimeout(() => reject(new Error(`Upload timeout after ${UPLOAD_TIMEOUT}ms`)), UPLOAD_TIMEOUT)
         );
 
         const result = await Promise.race([uploadPromise, timeoutPromise]);
 
         if (result.error) {
-          const isNetworkError = 
-            result.error.message?.includes('Failed to fetch') ||
-            result.error.message?.includes('Network') ||
-            result.error.message?.includes('timeout');
-
-          if (isNetworkError && sdkAttempt < MAX_RETRIES) {
-            sdkAttempt++;
-            const waitTime = 2000 * sdkAttempt;
-            console.warn(`[Storage] Network error on SDK attempt ${sdkAttempt}. Retrying in ${waitTime}ms...`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-            continue;
-          }
-
           throw result.error;
         }
 
-        console.log(`[Storage] Supabase SDK upload successful:`, result.data);
+        console.log(`[Storage] Upload successful:`, result.data);
         return { data: result.data, error: null };
 
       } catch (err: any) {
         const isNetworkError = 
           err.message?.includes('fetch') ||
           err.message?.includes('Network') ||
-          err.message?.includes('timeout');
+          err.message?.includes('timeout') ||
+          err.message?.includes('Failed') ||
+          err.message?.includes('ERR_UPLOAD_FILE_CHANGED');
 
-        if (isNetworkError && sdkAttempt < MAX_RETRIES) {
-          sdkAttempt++;
-          const waitTime = 2000 * sdkAttempt;
-          console.warn(`[Storage] Network exception on SDK attempt ${sdkAttempt}. Retrying in ${waitTime}ms...`, err.message);
+        if (isNetworkError && attempt < MAX_RETRIES) {
+          attempt++;
+          const waitTime = 1000 * attempt;
+          console.warn(`[Storage] Attempt ${attempt} failed (${err.message}). Retrying in ${waitTime}ms...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }
 
-        console.warn(`[Storage] Supabase SDK failed after ${sdkAttempt + 1} attempts:`, err.message);
-        break; // Move to fallback
+        console.warn(`[Storage] All retries exhausted. Final error:`, err.message);
+        break;
       }
     }
 
-    // Phase 2: Fallback to FormData-based direct fetch (for extra resilience on mobile)
-    console.log(`[Storage] SDK exhausted. Attempting FormData fallback...`);
-
-    try {
-      const uploadBody = fileBody instanceof ArrayBuffer 
-        ? new Blob([fileBody], { type: file.type }) 
-        : fileBody;
-
-      const formData = new FormData();
-      formData.append('file', uploadBody);
-
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Supabase configuration missing');
-      }
-
-      const url = `${supabaseUrl}/storage/v1/object/${bucket}/${path}`;
-
-      console.log(`[Storage] FormData fallback attempt to ${url}`);
-
-      const fetchPromise = fetch(url, {
-        method: 'POST',
-        headers: {
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${token || supabaseAnonKey}`,
-          'x-upsert': 'false',
-        },
-        body: formData // FormData handles multipart encoding
-      });
-
-      const timeoutPromise = new Promise<Response>((_, reject) =>
-        setTimeout(() => reject(new Error('Upload timeout after 30s')), UPLOAD_TIMEOUT)
-      );
-
-      const response = await Promise.race([fetchPromise, timeoutPromise]);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          errorData = { message: errorText };
-        }
-
-        const status = response.status;
-        const statusText = response.statusText;
-
-        console.error(`[Storage] FormData fallback failed - HTTP ${status}: ${statusText}`, errorData);
-        return {
-          data: null,
-          error: { message: `Upload failed (HTTP ${status}): ${errorData.message || errorData.error || statusText}` } as any
-        };
-      }
-
-      const data = await response.json();
-      console.log(`[Storage] FormData fallback successful:`, data);
-      return { data, error: null };
-
-    } catch (err: any) {
-      console.error(`[Storage] FormData fallback failed:`, err);
-      return { 
-        data: null, 
-        error: { message: `Storage Error: ${err.message || 'Unknown error'}. Your phone might be blocking the connection or using an old version of the app.` } as any 
-      };
-    }
+    // If all attempts fail, return clear error
+    console.error(`[Storage] Upload final failure after ${MAX_RETRIES + 1} attempts`);
+    return {
+      data: null,
+      error: {
+        message: `Storage Error: Image upload failed. Check internet connection and try again.`
+      } as any
+    };
   },
 
   getPublicUrl: (bucket: string, path: string) => {
