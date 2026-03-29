@@ -52,10 +52,24 @@ export default function ReportFormPage() {
     latitude: 0,
     longitude: 0,
   })
-  const [image, setImage] = useState<File | null>(null)
+  const [image, setImage] = useState<{ blob: Blob; name: string; size: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [gettingLocation, setGettingLocation] = useState(false)
+
+  // Convert File to Blob immediately to prevent "ERR_UPLOAD_FILE_CHANGED" on mobile
+  const handleImageSelect = (file: File | undefined) => {
+    if (!file) {
+      setImage(null)
+      return
+    }
+    // Store blob instead of File object - prevents stale reference on mobile
+    setImage({
+      blob: file.slice(0, file.size, file.type), // Create stable Blob copy
+      name: file.name,
+      size: file.size
+    })
+  }
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -173,9 +187,7 @@ export default function ReportFormPage() {
         console.log('[ReportForm] Image details:', {
           name: image.name,
           size: image.size,
-          type: image.type,
-          instanceOfFile: image instanceof File,
-          instanceOfBlob: image instanceof Blob
+          instanceOfBlob: image.blob instanceof Blob
         });
 
         const timestamp = Date.now()
@@ -185,13 +197,13 @@ export default function ReportFormPage() {
         
         console.log(`[ReportForm] Attempting image upload to: ${path}`);
         
-        // Final attempt at making this bulletproof: Catch the error and display more context
-        const { error: uploadError } = await storageService.uploadImage('reports', path, image);
+        // Pass Blob (stable on mobile) instead of File object
+        const { error: uploadError } = await storageService.uploadImage('reports', path, image.blob as any);
         
         if (uploadError) {
           console.error('[ReportForm] Storage upload failed error object:', uploadError);
           const errorMsg = uploadError.message || 'Unknown Storage Error';
-          throw new Error(`Storage Error: ${errorMsg}. Your phone might be blocking the connection or using an old version of the app. Look for v0.1.5 in the header!`);
+          throw new Error(`Storage Error: ${errorMsg}`);
         }
         
         imageUrl = storageService.getPublicUrl('reports', path)
@@ -293,7 +305,7 @@ export default function ReportFormPage() {
                   type="file"
                   id="image-upload"
                   accept="image/*"
-                  onChange={(e) => setImage(e.target.files?.[0] || null)}
+                  onChange={(e) => handleImageSelect(e.target.files?.[0])}
                   className="hidden"
                 />
                 {!image ? (
@@ -318,8 +330,8 @@ export default function ReportFormPage() {
                         <ImagePlus className="w-5 h-5 text-primary-500" />
                       </div>
                       <div className="flex flex-col overflow-hidden">
-                        <span className="text-sm font-medium text-gray-900 truncate">{image.name}</span>
-                        <span className="text-xs text-gray-500">{(image.size / 1024 / 1024).toFixed(2)} MB</span>
+                        <span className="text-sm font-medium text-gray-900 truncate">{image?.name}</span>
+                        <span className="text-xs text-gray-500">{((image?.size || 0) / 1024 / 1024).toFixed(2)} MB</span>
                       </div>
                     </div>
                     <button

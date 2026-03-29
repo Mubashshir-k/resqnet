@@ -153,37 +153,34 @@ export const assignmentsService = {
 
 // Storage
 export const storageService = {
-  uploadImage: async (bucket: string, path: string, file: File) => {
+  uploadImage: async (bucket: string, path: string, file: File | Blob, mimeType: string = 'image/jpeg') => {
     const UPLOAD_TIMEOUT = 50000;
-    const MAX_RETRIES = 5;
+    const MAX_RETRIES = 3;
     let attempt = 0;
 
+    // Detect MIME type if not provided
+    const contentType = file instanceof File ? file.type || mimeType : mimeType;
+    const fileSize = file.size;
+
     console.log(`[Storage] Uploading to ${bucket}/${path}`, {
-      size: file.size,
-      type: file.type,
-      name: file.name
+      size: fileSize,
+      type: contentType,
+      isFile: file instanceof File,
+      isBlob: file instanceof Blob
     });
 
-    // Convert File to Blob IMMEDIATELY to avoid ERR_UPLOAD_FILE_CHANGED on mobile
-    // File objects become stale on mobile after form operations
-    let uploadBody: Blob;
-    try {
-      uploadBody = new Blob([file], { type: file.type });
-      console.log(`[Storage] Converted File to Blob immediately (${uploadBody.size} bytes)`);
-    } catch (err: any) {
-      console.error(`[Storage] Failed to create Blob:`, err);
-      uploadBody = file as any;
-    }
+    // Already a Blob or is a File (which extends Blob)
+    const uploadBody = file;
 
-    // Try upload with retries
+    // Try upload with retries and random jitter to avoid repeated failures
     while (attempt <= MAX_RETRIES) {
       try {
-        console.log(`[Storage] Attempt ${attempt + 1}/${MAX_RETRIES + 1} - Using Supabase SDK`);
+        console.log(`[Storage] Attempt ${attempt + 1}/${MAX_RETRIES + 1}`);
 
         const uploadPromise = supabase.storage
           .from(bucket)
           .upload(path, uploadBody, {
-            contentType: file.type,
+            contentType: contentType,
             upsert: false,
           });
 
@@ -194,7 +191,21 @@ export const storageService = {
         const result = await Promise.race([uploadPromise, timeoutPromise]);
 
         if (result.error) {
-          console.error(`[Storage] SDK error on attempt ${attempt + 1}:`, result.error);
+          const errMsg = result.error.message || String(result.error);
+          console.error(`[Storage] SDK error on attempt ${attempt + 1}:`, errMsg);
+          
+          // If ERR_UPLOAD_FILE_CHANGED, wait longer before retry
+          if (errMsg.includes('ERR_UPLOAD_FILE_CHANGED') && attempt < MAX_RETRIES) {
+            attempt++;
+            // Use exponential + random jitter: 3-5s, 6-10s, 12-20s
+            const baseWait = 1000 * Math.pow(2, attempt);
+            const jitter = Math.random() * 2000;
+            const waitTime = baseWait + jitter;
+            console.warn(`[Storage] File changed error (mobile issue). Retrying in ${Math.round(waitTime)}ms...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+          
           throw result.error;
         }
 
@@ -203,25 +214,27 @@ export const storageService = {
 
       } catch (err: any) {
         const errorMessage = err.message || String(err);
-        const isNetworkError = 
+        const isRetryableError = 
           errorMessage.includes('fetch') ||
           errorMessage.includes('Network') ||
           errorMessage.includes('timeout') ||
           errorMessage.includes('Failed') ||
-          errorMessage.includes('ERR_UPLOAD_FILE_CHANGED') ||
-          errorMessage.includes('NETWORK_ERROR') ||
+          errorMessage.includes('ERR_') ||
+          errorMessage.includes('NETWORK') ||
           errorMessage.includes('StorageUnknownError');
 
-        if (isNetworkError && attempt < MAX_RETRIES) {
+        if (isRetryableError && attempt < MAX_RETRIES) {
           attempt++;
-          // Exponential backoff: 2s, 4s, 8s, 16s, 32s
-          const waitTime = 1000 * Math.pow(2, attempt - 1);
-          console.warn(`[Storage] Attempt ${attempt} failed (${errorMessage}). Retrying in ${waitTime}ms...`);
+          // For temporary errors: 2s + jitter, 4s + jitter, 8s + jitter
+          const baseWait = 1000 * Math.pow(2, attempt - 1);
+          const jitter = Math.random() * 1000;
+          const waitTime = baseWait + jitter;
+          console.warn(`[Storage] Attempt ${attempt} failed (${errorMessage}). Retrying in ${Math.round(waitTime)}ms...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }
 
-        console.warn(`[Storage] All retries exhausted. Final error: ${errorMessage}`);
+        console.warn(`[Storage] Non-retryable error or max retries reached: ${errorMessage}`);
         break;
       }
     }
