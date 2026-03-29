@@ -140,6 +140,16 @@ export const useAuthStore = create<AuthState>((set) => ({
           const { data: sessionData, error: sessionError } = await supabaseAuth.getSession()
           
           if (sessionError) {
+            // Handle "Refresh Token Not Found" - invalid/expired session
+            if (sessionError.message?.includes('Refresh Token Not Found') || 
+                sessionError.message?.includes('Invalid Refresh Token')) {
+              console.warn('[Auth] Refresh token expired or missing, clearing session')
+              // Clear the invalid session from storage
+              localStorage.removeItem('resqnet-auth-token')
+              set({ loading: false })
+              return;
+            }
+            
             if (sessionError.message.includes('Lock') || sessionError.name === 'AbortError') {
               console.warn('Auth lock stolen during checkAuth, skipping manual check as another request is handling it.')
               return;

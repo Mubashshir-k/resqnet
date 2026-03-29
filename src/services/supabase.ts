@@ -64,8 +64,25 @@ return handleAuthLock(async () => {
   },
 
   getSession: async () => {
-    const { data, error } = await supabase.auth.getSession()
-    return { data, error }
+    return handleAuthLock(async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        
+        // Handle specific refresh token errors gracefully
+        if (error?.message?.includes('Refresh Token Not Found') || 
+            error?.message?.includes('Invalid Refresh Token')) {
+          console.warn('[Supabase] Refresh token error - clearing stored session')
+          // Clear the corrupted session from storage
+          localStorage.removeItem('resqnet-auth-token')
+          return { data: null, error: null } // Return clean state instead of error
+        }
+        
+        return { data, error }
+      } catch (err) {
+        console.error('[Supabase] getSession error:', err)
+        return { data: null, error: err }
+      }
+    });
   },
 
   onAuthStateChange: (callback: (event: any, session: any) => void) => {
