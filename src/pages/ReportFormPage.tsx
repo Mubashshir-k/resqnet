@@ -52,23 +52,35 @@ export default function ReportFormPage() {
     latitude: 0,
     longitude: 0,
   })
-  const [image, setImage] = useState<{ blob: Blob; name: string; size: number } | null>(null)
+  const [image, setImage] = useState<{ data: ArrayBuffer; name: string; size: number; mimeType: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [gettingLocation, setGettingLocation] = useState(false)
 
-  // Convert File to Blob immediately to prevent "ERR_UPLOAD_FILE_CHANGED" on mobile
-  const handleImageSelect = (file: File | undefined) => {
+  // Read file into memory immediately to prevent ERR_UPLOAD_FILE_CHANGED on mobile
+  // This preserves the actual file bytes, not a reference to the file system
+  const handleImageSelect = async (file: File | undefined) => {
     if (!file) {
       setImage(null)
       return
     }
-    // Store blob instead of File object - prevents stale reference on mobile
-    setImage({
-      blob: file.slice(0, file.size, file.type), // Create stable Blob copy
-      name: file.name,
-      size: file.size
-    })
+    
+    try {
+      console.log('[ReportForm] Reading image file into memory...');
+      // Read entire file as ArrayBuffer - this preserves data on mobile
+      const arrayBuffer = await file.arrayBuffer();
+      console.log(`[ReportForm] Image loaded into memory: ${arrayBuffer.byteLength} bytes`);
+      
+      setImage({
+        data: arrayBuffer,
+        name: file.name,
+        size: file.size,
+        mimeType: file.type || 'image/jpeg'
+      });
+    } catch (err: any) {
+      console.error('[ReportForm] Failed to read image:', err);
+      setError('Failed to load image. Please try selecting again.');
+    }
   }
 
   const handleGetLocation = () => {
@@ -187,7 +199,8 @@ export default function ReportFormPage() {
         console.log('[ReportForm] Image details:', {
           name: image.name,
           size: image.size,
-          instanceOfBlob: image.blob instanceof Blob
+          mimeType: image.mimeType,
+          dataSize: image.data.byteLength
         });
 
         const timestamp = Date.now()
@@ -197,8 +210,11 @@ export default function ReportFormPage() {
         
         console.log(`[ReportForm] Attempting image upload to: ${path}`);
         
-        // Pass Blob (stable on mobile) instead of File object
-        const { error: uploadError } = await storageService.uploadImage('reports', path, image.blob as any);
+        // Create fresh Blob from ArrayBuffer (data is in memory, not referencing file system)
+        const imageBlob = new Blob([image.data], { type: image.mimeType });
+        
+        // Pass fresh Blob created from memory data
+        const { error: uploadError } = await storageService.uploadImage('reports', path, imageBlob, image.mimeType);
         
         if (uploadError) {
           console.error('[ReportForm] Storage upload failed error object:', uploadError);
