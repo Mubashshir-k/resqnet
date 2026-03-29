@@ -72,16 +72,23 @@ export default function ReportFormPage() {
     setGettingLocation(true)
     console.log('[ReportForm] Requesting GPS location with 10s timeout...')
     
+    let watchId: number | null = null
+    
     // Set a timeout to fail fast if GPS is taking too long
     const timeoutId = setTimeout(() => {
-      navigator.geolocation.clearWatch(watchId)
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId)
+      }
       setError('Location request timed out. Please try again or click on the map.')
       setGettingLocation(false)
     }, 10000)
     
-    const watchId = navigator.geolocation.getCurrentPosition(
+    watchId = navigator.geolocation.watchPosition(
       (position) => {
         clearTimeout(timeoutId)
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId)
+        }
         console.log('[ReportForm] GPS location acquired:', {
           lat: position.coords.latitude,
           lng: position.coords.longitude,

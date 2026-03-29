@@ -141,8 +141,10 @@ export const useAuthStore = create<AuthState>((set) => ({
           
           if (sessionError) {
             // Handle "Refresh Token Not Found" - invalid/expired session
-            if (sessionError.message?.includes('Refresh Token Not Found') || 
-                sessionError.message?.includes('Invalid Refresh Token')) {
+            const errorMessage = (sessionError as any).message || ''
+            const errorName = (sessionError as any).name || ''
+            if (errorMessage?.includes('Refresh Token Not Found') || 
+                errorMessage?.includes('Invalid Refresh Token')) {
               console.warn('[Auth] Refresh token expired or missing, clearing session')
               // Clear the invalid session from storage
               localStorage.removeItem('resqnet-auth-token')
@@ -150,7 +152,7 @@ export const useAuthStore = create<AuthState>((set) => ({
               return;
             }
             
-            if (sessionError.message.includes('Lock') || sessionError.name === 'AbortError') {
+            if (errorMessage.includes('Lock') || errorName === 'AbortError') {
               console.warn('Auth lock stolen during checkAuth, skipping manual check as another request is handling it.')
               return;
             }
