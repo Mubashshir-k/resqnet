@@ -31,83 +31,94 @@ export default function Header() {
   const visibleLinks = navLinks.filter((link) => link.roles.includes(user?.role || ''))
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <span className="text-xl sm:text-2xl font-bold text-primary-500">ResQNet</span>
-          <span className="text-[10px] font-mono text-gray-400 border border-gray-200 px-1.5 py-0.5 rounded leading-none">v0.1.6</span>
+        <Link to="/dashboard" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all">
+            <span className="text-lg font-black text-white">+</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xl font-black text-gray-900 leading-none">ResQNet</span>
+            <span className="text-[9px] font-mono text-gray-400 font-bold">v0.1.6</span>
+          </div>
         </Link>
 
         {/* Desktop Menu */}
-        <nav className="hidden lg:flex items-center gap-6">
+        <nav className="hidden lg:flex items-center gap-8">
           {visibleLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
-              className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
+              className="text-gray-700 hover:text-primary-600 transition-colors font-semibold text-sm group"
             >
               {link.label}
+              <div className="h-0.5 bg-primary-500 rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
             </Link>
           ))}
         </nav>
 
         {/* User Menu */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <NotificationCenter />
           <button
             onClick={toggleDarkMode}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {darkMode ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-gray-700" />}
           </button>
           {user && (
             <div className="hidden lg:flex items-center gap-4">
-              <span className="text-sm font-medium text-gray-700 bg-gray-50 px-3 py-1.5 rounded-full max-w-[260px] truncate">
-                {user.name} <span className="text-gray-400 capitalize">({user.role})</span>
-              </span>
+              <div className="text-right">
+                <p className="text-sm font-bold text-gray-900">{user.name}</p>
+                <p className="text-xs text-gray-500 font-medium capitalize">{user.role}</p>
+              </div>
+              <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg font-bold transition-all active:scale-95"
+                className="flex items-center gap-2 px-4 py-2 text-white bg-gradient-to-r from-red-500 to-red-600 hover:shadow-lg hover:shadow-red-500/30 rounded-xl font-bold transition-all active:scale-95"
               >
-                <LogOut size={18} />
+                <LogOut size={16} />
                 <span>Logout</span>
               </button>
             </div>
           )}
 
           {/* Mobile/Tablet Menu Toggle */}
-          <button className="lg:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          <button className="lg:hidden p-2 hover:bg-gray-100 rounded-xl transition-colors" onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? <X size={24} className="text-gray-700" /> : <Menu size={24} className="text-gray-700" />}
           </button>
         </div>
       </div>
 
       {/* Mobile/Tablet Menu Overlay */}
       {menuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-white shadow-xl border-t border-gray-100 z-50">
-          <nav className="flex flex-col p-4 space-y-1">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-lg shadow-2xl border-t border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <nav className="flex flex-col p-4 space-y-1 max-w-md">
             {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className="block text-gray-900 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors font-semibold py-3 px-4"
+                className="block text-gray-900 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-colors font-semibold py-3 px-4"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
             {user && (
-              <div className="mt-2 pt-4 border-t border-gray-100">
-                <p className="px-4 text-sm text-gray-500 mb-2 font-medium">Signed in as {user.name}</p>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="px-4 text-xs text-gray-500 mb-3 font-bold uppercase tracking-wide">Account</p>
+                <p className="px-4 text-sm text-gray-900 font-bold mb-3">{user.name}</p>
                 <button
                   onClick={() => {
                     setMenuOpen(false)
                     handleLogout()
                   }}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-bold active:scale-95"
+                  className="flex w-full items-center gap-3 px-4 py-3 text-white bg-gradient-to-r from-red-500 to-red-600 hover:shadow-lg hover:shadow-red-500/30 rounded-xl transition-all font-bold active:scale-95"
                 >
-                  <LogOut size={20} />
+                  <LogOut size={18} />
                   <span>Logout</span>
                 </button>
               </div>
@@ -118,3 +129,4 @@ export default function Header() {
     </header>
   )
 }
+

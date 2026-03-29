@@ -244,36 +244,46 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <div className="flex items-center gap-3 flex-wrap">
-            <p className="text-gray-600">Real-time disaster response overview</p>
-            {user?.role === 'volunteer' && (
-              <span
-                className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  assignmentRealtimeHealthy ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                }`}
-              >
-                {assignmentRealtimeHealthy ? 'Live' : 'Syncing'}
-              </span>
-            )}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="mb-12">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-12 w-1.5 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></div>
+            <div>
+              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight">Dashboard</h1>
+              <p className="text-gray-600 text-lg font-medium mt-2">Real-time disaster response overview</p>
+            </div>
           </div>
+          {user?.role === 'volunteer' && (
+            <span
+              className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full ${
+                assignmentRealtimeHealthy 
+                  ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 shadow-sm' 
+                  : 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 shadow-sm'
+              }`}
+            >
+              {assignmentRealtimeHealthy ? '🟢 Live Updates' : '🔄 Syncing...'}
+            </span>
+          )}
         </div>
 
         {/* Stats */}
-        <div className={`grid ${user?.role === 'user' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'} gap-4 mb-8`}>
+        <div className={`grid ${user?.role === 'user' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'} gap-6 mb-12`}>
           {statCards.map((stat) => (
-            <Card key={stat.label} className={`${stat.bg} border-0`}>
+            <Card key={stat.label} variant="default" className={`${stat.bg} border-l-4 ${
+              stat.label === 'Pending' ? 'border-l-orange-500' : 
+              stat.label === 'Resolved' ? 'border-l-green-500' : 
+              stat.label === 'Assigned' ? 'border-l-red-500' : 
+              'border-l-primary-500'
+            }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-gray-600 text-sm font-semibold uppercase tracking-wide mb-2">{stat.label}</p>
+                  <p className="text-3xl sm:text-4xl font-black text-gray-900">{stat.value}</p>
                 </div>
-                <div className={`${stat.color}`}>{stat.icon}</div>
+                <div className={`${stat.color} p-3 bg-white rounded-2xl shadow-md`}>{stat.icon}</div>
               </div>
             </Card>
           ))}
@@ -282,9 +292,12 @@ export default function DashboardPage() {
         {/* Volunteer specific view overrides generic reports logic */}
         {user?.role === 'volunteer' ? (
           <div className="mb-12 z-0 relative">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">My Assignments</h2>
-              <Link to="/map" className="text-primary-500 hover:text-primary-600 font-semibold">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+              <div>
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight">My Assignments</h2>
+                <p className="text-gray-600 font-medium mt-1">Respond to dispatched incidents</p>
+              </div>
+              <Link to="/map" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 transition-all duration-300">
                 Open Full Map →
               </Link>
             </div>
@@ -300,23 +313,24 @@ export default function DashboardPage() {
                 {/* Active Assignments */}
                 {assignments.filter(a => a.status === 'accepted').length > 0 && (
                   <section>
-                    <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2">
-                       🚀 Active Missions
-                       <span className="bg-blue-100 px-2 py-0.5 rounded-full text-sm font-bold">{assignments.filter(a => a.status === 'accepted').length}</span>
-                    </h3>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="h-8 w-1 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                      <h3 className="text-2xl font-black text-gray-900">🚀 Active Missions</h3>
+                      <span className="ml-auto bg-gradient-to-r from-blue-100 to-blue-200 px-3 py-1.5 rounded-full text-xs font-bold text-blue-800">{assignments.filter(a => a.status === 'accepted').length} Active</span>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {assignments.filter(a => a.status === 'accepted').map((assignment) => (
-                        <Card key={assignment.id} className="flex flex-col border-blue-200 shadow-blue-50">
-                          <div className="flex-1 pointer-events-none mb-4 -mx-2 -mt-2">
+                        <Card key={assignment.id} variant="default" className="flex flex-col border-l-4 border-l-blue-500">
+                          <div className="flex-1 pointer-events-none mb-6 -mx-2 -mt-2">
                             {assignment.reports && <ReportCard report={{ ...assignment.reports, status: assignment.reports.status as any } as Report} />}
                           </div>
-                          <div className="mt-auto px-1 border-t border-gray-100 pt-4">
+                          <div className="mt-auto pt-6 border-t border-gray-100">
                             <Button
-                              className="w-full !bg-blue-600 hover:!bg-blue-700 font-bold"
+                              className="w-full !bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-lg shadow-blue-500/30 font-bold"
                               onClick={() => handleUpdateAssignment(assignment.id, 'completed', assignment.report_id)}
                               disabled={completingAssignmentId === assignment.id}
                             >
-                              {justCompletedAssignmentId === assignment.id ? '✅ Completed!' : '🚀 Mark as Completed'}
+                              {justCompletedAssignmentId === assignment.id ? '✅ Completed!' : '✨ Mark Complete'}
                             </Button>
                           </div>
                         </Card>
@@ -327,24 +341,25 @@ export default function DashboardPage() {
 
                 {/* Pending Assignments */}
                 <section>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                    📋 New Dispatches (Pending)
-                    <span className="bg-gray-200 px-2 py-0.5 rounded-full text-sm font-bold">{assignments.filter(a => a.status === 'pending').length}</span>
-                  </h3>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="h-8 w-1 bg-gradient-to-b from-amber-500 to-orange-600 rounded-full"></div>
+                    <h3 className="text-2xl font-black text-gray-900">📋 New Dispatches</h3>
+                    <span className="ml-auto bg-gradient-to-r from-amber-100 to-orange-200 px-3 py-1.5 rounded-full text-xs font-bold text-amber-800">{assignments.filter(a => a.status === 'pending').length} Pending</span>
+                  </div>
                   {assignments.filter(a => a.status === 'pending').length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {assignments.filter(a => a.status === 'pending').map((assignment) => (
-                        <Card key={assignment.id} className="flex flex-col">
-                          <div className="flex-1 pointer-events-none mb-4 -mx-2 -mt-2">
+                        <Card key={assignment.id} variant="default" className="flex flex-col border-l-4 border-l-amber-500">
+                          <div className="flex-1 pointer-events-none mb-6 -mx-2 -mt-2">
                             {assignment.reports && <ReportCard report={{ ...assignment.reports, status: assignment.reports.status as any } as Report} />}
                           </div>
-                          <div className="mt-auto px-1 border-t border-gray-100 pt-4">
+                          <div className="mt-auto pt-6 border-t border-gray-100">
                             <div className="flex gap-3">
-                              <Button className="flex-1 !bg-green-600 hover:!bg-green-700" onClick={() => handleUpdateAssignment(assignment.id, 'accepted', assignment.report_id)}>
-                                Accept
+                              <Button className="flex-1 !bg-gradient-to-r from-emerald-600 to-green-700 hover:shadow-lg shadow-green-500/30 font-bold" onClick={() => handleUpdateAssignment(assignment.id, 'accepted', assignment.report_id)}>
+                                ✔ Accept
                               </Button>
-                              <Button className="flex-1 !bg-red-500 hover:!bg-red-600" onClick={() => handleUpdateAssignment(assignment.id, 'rejected', assignment.report_id)}>
-                                Decline
+                              <Button className="flex-1 !bg-gradient-to-r from-red-500 to-red-600 hover:shadow-lg shadow-red-500/30 font-bold" onClick={() => handleUpdateAssignment(assignment.id, 'rejected', assignment.report_id)}>
+                                ✕ Decline
                               </Button>
                             </div>
                           </div>
