@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { LogOut, Menu, Moon, Sun, X } from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useState } from 'react'
 import { useUIStore } from '@/store/uiStore'
@@ -62,10 +62,13 @@ export default function Header() {
           <NotificationCenter />
           <button
             onClick={toggleDarkMode}
-            className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="relative inline-flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-all"
             title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {darkMode ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-gray-700" />}
+            <div className="relative w-10 h-6 bg-gray-200 dark:bg-slate-700 rounded-full transition-colors">
+              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-slate-900 rounded-full shadow-md transition-transform duration-300 ${darkMode ? 'translate-x-4' : 'translate-x-0'}`}></div>
+            </div>
+            <span className="text-xs font-bold text-gray-600 dark:text-gray-300 hidden sm:inline">{darkMode ? 'Dark' : 'Light'}</span>
           </button>
           {user && (
             <div className="hidden lg:flex items-center gap-4">
@@ -95,7 +98,7 @@ export default function Header() {
 
       {/* Mobile/Tablet Menu Overlay */}
       {menuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-lg shadow-2xl border-t border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="lg:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900/95 backdrop-blur-lg shadow-2xl border-t border-gray-100 dark:border-slate-800 z-50 animate-in fade-in slide-in-from-left duration-200">
           <nav className="flex flex-col p-4 space-y-1 max-w-md">
             {visibleLinks.map((link) => (
               <Link

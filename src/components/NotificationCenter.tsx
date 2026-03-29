@@ -70,7 +70,10 @@ export default function NotificationCenter() {
               <h3 className="font-black text-gray-900 dark:text-white tracking-tight">Notifications</h3>
               <div className="flex items-center gap-3">
                 <button 
-                  onClick={clearNotifications} 
+                  onClick={() => {
+                    clearNotifications()
+                    setOpen(false)
+                  }}
                   className="text-xs text-primary-600 dark:text-primary-400 font-bold hover:underline"
                 >
                   Clear all

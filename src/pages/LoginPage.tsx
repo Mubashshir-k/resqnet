@@ -34,10 +34,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary-50/40 via-white to-gray-50/40 flex items-center justify-center px-4 py-8">
       <Card variant="elevated" className="w-full max-w-md">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-4 shadow-lg shadow-primary-500/30">
-            <span className="text-2xl font-bold text-white">+</span>
-          </div>
-          <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">ResQNet</h1>
+          <h1 className="text-4xl font-black text-gray-900 mb-3 tracking-tight">ResQNet</h1>
           <p className="text-gray-600 text-lg font-medium">AI Disaster Response</p>
         </div>
 

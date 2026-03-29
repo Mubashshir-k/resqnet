@@ -86,14 +86,14 @@ export default function MyReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Header />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">My Reports</h1>
-            <p className="text-gray-600">Track all your submitted incidents</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Reports</h1>
+            <p className="text-gray-600 dark:text-gray-400">Track all your submitted incidents</p>
           </div>
           {user?.role === 'user' && (
             <Link to="/report">

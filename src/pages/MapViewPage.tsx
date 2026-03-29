@@ -39,12 +39,12 @@ export default function MapViewPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Header />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Active Incidents Map</h1>
-        <p className="text-gray-600 mb-8">Real-time view of all reported incidents</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Active Incidents Map</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">Real-time view of all reported incidents</p>
 
         {/* Map */}
         {loading ? (

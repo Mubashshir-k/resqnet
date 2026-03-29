@@ -244,7 +244,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Header />
 
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -252,16 +252,21 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3 mb-3">
             <div className="h-12 w-1.5 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></div>
             <div>
-              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight">Dashboard</h1>
-              <p className="text-gray-600 text-lg font-medium mt-2">Real-time disaster response overview</p>
+              <div className="flex items-center gap-3">
+                <h1 className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
+                  <span className="text-xs font-black text-white">+</span>
+                </div>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 text-lg font-medium mt-2">Real-time disaster response overview</p>
             </div>
           </div>
           {user?.role === 'volunteer' && (
             <span
               className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full ${
                 assignmentRealtimeHealthy 
-                  ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 shadow-sm' 
-                  : 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 shadow-sm'
+                  ? 'bg-gradient-to-r from-green-100 dark:from-green-900/30 to-emerald-100 dark:to-emerald-900/30 text-green-800 dark:text-green-300 shadow-sm' 
+                  : 'bg-gradient-to-r from-amber-100 dark:from-amber-900/30 to-orange-100 dark:to-orange-900/30 text-amber-800 dark:text-amber-300 shadow-sm'
               }`}
             >
               {assignmentRealtimeHealthy ? '🟢 Live Updates' : '🔄 Syncing...'}
@@ -293,9 +298,14 @@ export default function DashboardPage() {
         {user?.role === 'volunteer' ? (
           <div className="mb-12 z-0 relative">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-              <div>
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight">My Assignments</h2>
-                <p className="text-gray-600 font-medium mt-1">Respond to dispatched incidents</p>
+              <div className="flex items-center gap-3">
+                <div>
+                  <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">My Assignments</h2>
+                  <p className="text-gray-600 dark:text-gray-400 font-medium mt-1">Respond to dispatched incidents</p>
+                </div>
+                <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-md">
+                  <span className="text-[10px] font-black text-white">+</span>
+                </div>
               </div>
               <Link to="/map" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-primary-500/30 transition-all duration-300">
                 Open Full Map →
@@ -438,8 +448,13 @@ export default function DashboardPage() {
             {/* Recent Reports */}
             <div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Recent Reports</h2>
-                <Link to="/map" className="text-primary-500 hover:text-primary-600 font-semibold">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Recent Reports</h2>
+                  <div className="w-6 h-6 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-md">
+                    <span className="text-[9px] font-black text-white">+</span>
+                  </div>
+                </div>
+                <Link to="/map" className="text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 font-semibold">
                   View All →
                 </Link>
               </div>

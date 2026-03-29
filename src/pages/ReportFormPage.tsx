@@ -261,17 +261,17 @@ export default function ReportFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Card>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Report an Incident</h1>
-          <p className="text-gray-600 mb-8">Provide details so we can help quickly</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Report an Incident</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">Provide details so we can help quickly</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
                 {error}
               </div>
             )}
@@ -286,7 +286,7 @@ export default function ReportFormPage() {
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                 />
-                <p className={`mt-1.5 text-[11px] font-medium ${formData.title.trim().length >= MIN_TITLE_LEN ? 'text-green-600' : 'text-gray-400'}`}>
+                <p className={`mt-1.5 text-[11px] font-medium ${formData.title.trim().length >= MIN_TITLE_LEN ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                   {formData.title.trim().length}/{MIN_TITLE_LEN}+ characters
                 </p>
               </div>

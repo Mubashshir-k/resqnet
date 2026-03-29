@@ -7,9 +7,9 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export default function Card({ children, className = '', variant = 'default', ...props }: CardProps) {
   const variantClasses = {
-    default: 'bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300',
-    elevated: 'bg-white rounded-2xl shadow-xl border border-gray-100/50 backdrop-blur-sm',
-    flat: 'bg-slate-50/50 dark:bg-slate-900/20 rounded-2xl border border-gray-200 dark:border-slate-800',
+    default: 'bg-white dark:bg-slate-800/80 rounded-2xl shadow-lg dark:shadow-2xl border border-gray-100 dark:border-slate-700/60 hover:shadow-xl dark:hover:shadow-xl hover:border-gray-200 dark:hover:border-slate-600 transition-all duration-300',
+    elevated: 'bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl border border-gray-100 dark:border-slate-700 backdrop-blur-sm dark:backdrop-blur-md',
+    flat: 'bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-gray-200 dark:border-slate-700/50',
   }
 
   return (

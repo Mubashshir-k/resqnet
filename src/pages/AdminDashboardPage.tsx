@@ -259,23 +259,23 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Header />
 
       <div className="max-w-7xl mx-auto px-4 py-8 pb-24 md:pb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h1>
         <div className="mb-8 flex items-center gap-3 flex-wrap">
-          <p className="text-gray-600">Manage incidents and assign volunteers</p>
+          <p className="text-gray-600 dark:text-gray-400">Manage incidents and assign volunteers</p>
           <span
             className={`text-xs font-semibold px-2 py-1 rounded-full ${
-              realtimeHealthy ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+              realtimeHealthy ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
             }`}
           >
             {realtimeHealthy ? 'Live' : 'Syncing'}
           </span>
         </div>
         {!realtimeHealthy && (
-          <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="mb-6 rounded-lg border border-amber-200 dark:border-amber-900/30 bg-amber-50 dark:bg-amber-900/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
             Live updates are temporarily unavailable. Auto-refresh fallback is active.
           </p>
         )}
