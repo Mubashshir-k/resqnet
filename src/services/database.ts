@@ -154,8 +154,8 @@ export const assignmentsService = {
 // Storage
 export const storageService = {
   uploadImage: async (bucket: string, path: string, file: File) => {
-    const UPLOAD_TIMEOUT = 40000;
-    const MAX_RETRIES = 3;
+    const UPLOAD_TIMEOUT = 50000;
+    const MAX_RETRIES = 5;
     let attempt = 0;
 
     console.log(`[Storage] Uploading to ${bucket}/${path}`, {
@@ -164,10 +164,16 @@ export const storageService = {
       name: file.name
     });
 
-    // On mobile, DON'T try to read file - use File object directly
-    // Reading causes permission errors and ERR_UPLOAD_FILE_CHANGED
-    const uploadBody = file;
-    console.log(`[Storage] Using File object directly (size: ${file.size} bytes)`);
+    // Convert File to Blob IMMEDIATELY to avoid ERR_UPLOAD_FILE_CHANGED on mobile
+    // File objects become stale on mobile after form operations
+    let uploadBody: Blob;
+    try {
+      uploadBody = new Blob([file], { type: file.type });
+      console.log(`[Storage] Converted File to Blob immediately (${uploadBody.size} bytes)`);
+    } catch (err: any) {
+      console.error(`[Storage] Failed to create Blob:`, err);
+      uploadBody = file as any;
+    }
 
     // Try upload with retries
     while (attempt <= MAX_RETRIES) {
@@ -188,6 +194,7 @@ export const storageService = {
         const result = await Promise.race([uploadPromise, timeoutPromise]);
 
         if (result.error) {
+          console.error(`[Storage] SDK error on attempt ${attempt + 1}:`, result.error);
           throw result.error;
         }
 
@@ -195,22 +202,26 @@ export const storageService = {
         return { data: result.data, error: null };
 
       } catch (err: any) {
+        const errorMessage = err.message || String(err);
         const isNetworkError = 
-          err.message?.includes('fetch') ||
-          err.message?.includes('Network') ||
-          err.message?.includes('timeout') ||
-          err.message?.includes('Failed') ||
-          err.message?.includes('ERR_UPLOAD_FILE_CHANGED');
+          errorMessage.includes('fetch') ||
+          errorMessage.includes('Network') ||
+          errorMessage.includes('timeout') ||
+          errorMessage.includes('Failed') ||
+          errorMessage.includes('ERR_UPLOAD_FILE_CHANGED') ||
+          errorMessage.includes('NETWORK_ERROR') ||
+          errorMessage.includes('StorageUnknownError');
 
         if (isNetworkError && attempt < MAX_RETRIES) {
           attempt++;
-          const waitTime = 1000 * attempt;
-          console.warn(`[Storage] Attempt ${attempt} failed (${err.message}). Retrying in ${waitTime}ms...`);
+          // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+          const waitTime = 1000 * Math.pow(2, attempt - 1);
+          console.warn(`[Storage] Attempt ${attempt} failed (${errorMessage}). Retrying in ${waitTime}ms...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         }
 
-        console.warn(`[Storage] All retries exhausted. Final error:`, err.message);
+        console.warn(`[Storage] All retries exhausted. Final error: ${errorMessage}`);
         break;
       }
     }
@@ -220,7 +231,7 @@ export const storageService = {
     return {
       data: null,
       error: {
-        message: `Storage Error: Image upload failed. Check internet connection and try again.`
+        message: `Storage Error: Image upload failed after multiple attempts. Please check your internet connection and try again.`
       } as any
     };
   },

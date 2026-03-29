@@ -3,6 +3,7 @@ import Header from '@/components/Header'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
 import { reportsService, assignmentsService, usersService, realtimeService } from '@/services/database'
+import { supabaseAuth } from '@/services/supabase'
 import { Report, User } from '@/types'
 import ReportCard from '@/components/ReportCard'
 import { User as UserIcon, ChevronDown, Check } from 'lucide-react'
@@ -219,6 +220,10 @@ export default function AdminDashboardPage() {
 
     try {
       const targetReportId = reportToDelete
+      
+      // Refresh auth session to ensure admin permissions are current
+      await supabaseAuth.getSession()
+      
       const { count, error: deleteError } = await reportsService.delete(targetReportId)
       if (deleteError) throw deleteError
 
