@@ -98,22 +98,30 @@ export default function Header() {
 
       {/* Mobile/Tablet Menu Overlay */}
       {menuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-white dark:bg-slate-900/95 backdrop-blur-lg shadow-2xl border-t border-gray-100 dark:border-slate-800 z-50 animate-in fade-in slide-in-from-left duration-200">
-          <nav className="flex flex-col p-4 space-y-1 max-w-md">
+        <>
+          <div className="lg:hidden fixed inset-0 bg-black/40 z-40" onClick={() => setMenuOpen(false)} />
+          <div className="lg:hidden fixed inset-y-0 right-0 w-72 bg-white dark:bg-slate-900/95 backdrop-blur-lg shadow-2xl border-l border-gray-100 dark:border-slate-800 z-50 animate-in fade-in slide-in-from-right duration-300 overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800">
+              <h2 className="font-bold text-gray-900 dark:text-white">Menu</h2>
+              <button onClick={() => setMenuOpen(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                <X size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+            </div>
+            <nav className="flex flex-col p-4 space-y-1">
             {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className="block text-gray-900 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-colors font-semibold py-3 px-4"
+                className="block text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-slate-800 rounded-xl transition-colors font-semibold py-3 px-4"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
             {user && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="px-4 text-xs text-gray-500 mb-3 font-bold uppercase tracking-wide">Account</p>
-                <p className="px-4 text-sm text-gray-900 font-bold mb-3">{user.name}</p>
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-800">
+                <p className="px-4 text-xs text-gray-500 dark:text-gray-400 mb-3 font-bold uppercase tracking-wide">Account</p>
+                <p className="px-4 text-sm text-gray-900 dark:text-white font-bold mb-3">{user.name}</p>
                 <button
                   onClick={() => {
                     setMenuOpen(false)
@@ -127,7 +135,8 @@ export default function Header() {
               </div>
             )}
           </nav>
-        </div>
+          </div>
+        </>
       )}
     </header>
   )
