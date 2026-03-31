@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { User } from '@/types'
-import { supabaseAuth } from '@/services/supabase'
+import { authStorageKey, supabaseAuth } from '@/services/supabase'
 import { usersService } from '@/services/database'
 
 interface AuthState {
@@ -147,7 +147,7 @@ export const useAuthStore = create<AuthState>((set) => ({
                 errorMessage?.includes('Invalid Refresh Token')) {
               console.warn('[Auth] Refresh token expired or missing, clearing session')
               // Clear the invalid session from storage
-              localStorage.removeItem('resqnet-auth-token')
+              localStorage.removeItem(authStorageKey)
               set({ loading: false })
               return;
             }

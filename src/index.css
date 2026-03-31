@@ -6,17 +6,21 @@
     body {
         @apply antialiased;
     }
-    
+
     /* Global absolute scrollbar removal for native app feel while maintaining scrollability */
-    html, body {
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
+    html,
+    body {
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        scrollbar-width: none;
+        /* Firefox */
         overflow-y: auto;
         overflow-x: hidden;
     }
-    
+
     ::-webkit-scrollbar {
-        display: none; /* Chrome, Safari and Opera */
+        display: none;
+        /* Chrome, Safari and Opera */
     }
 
     .dark body {
@@ -37,11 +41,14 @@
         color: #f9fafb !important;
     }
 
-    .dark .text-gray-700, .dark .text-gray-600, .dark .text-gray-500 {
+    .dark .text-gray-700,
+    .dark .text-gray-600,
+    .dark .text-gray-500 {
         color: #d1d5db !important;
     }
 
-    .dark .border-gray-200, .dark .border-gray-100 {
+    .dark .border-gray-200,
+    .dark .border-gray-100 {
         border-color: #223046 !important;
     }
 
@@ -63,6 +70,7 @@
     .dark .bg-green-50 {
         background-color: rgba(16, 185, 129, 0.14) !important;
     }
+
     .dark .text-green-600 {
         color: #34d399 !important;
     }
@@ -70,6 +78,7 @@
     .dark .bg-orange-100 {
         background-color: rgba(249, 115, 22, 0.18) !important;
     }
+
     .dark .text-orange-800 {
         color: #fb923c !important;
     }

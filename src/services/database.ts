@@ -47,9 +47,26 @@ export const usersService = {
 export const reportsService = {
   create: async (report: Omit<Report, 'id' | 'created_at' | 'updated_at'>) => {
     // Always use the current auth uid for RLS (auth.uid() must equal user_id).
-    const { data: authData, error: authError } = await supabase.auth.getUser()
+    const resolveAuthUserId = async (): Promise<{ userId: string | null; error: any }> => {
+      const first = await supabase.auth.getUser()
+      const firstErrorMessage = first.error?.message || ''
+      const isMissingSession =
+        first.error?.name === 'AuthSessionMissingError' ||
+        firstErrorMessage.includes('Auth session missing')
+
+      if (!isMissingSession) {
+        return { userId: first.data.user?.id || null, error: first.error }
+      }
+
+      // Transient race can happen right after refresh/login; rehydrate + retry once.
+      await supabase.auth.getSession()
+      await new Promise((resolve) => setTimeout(resolve, 200))
+      const retry = await supabase.auth.getUser()
+      return { userId: retry.data.user?.id || null, error: retry.error }
+    }
+
+    const { userId: authUserId, error: authError } = await resolveAuthUserId()
     if (authError) return { data: null, error: authError }
-    const authUserId = authData.user?.id
     if (!authUserId) return { data: null, error: new Error('Not authenticated') as any }
 
     const reportData = {

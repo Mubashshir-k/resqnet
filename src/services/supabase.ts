@@ -2,13 +2,30 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseProjectRef = (() => {
+  try {
+    return new URL(supabaseUrl).hostname.split('.')[0] || 'default'
+  } catch {
+    return 'default'
+  }
+})()
+export const authStorageKey = `resqnet-auth-token-${supabaseProjectRef}`
+
+// One-time cleanup for legacy storage key to avoid cross-project token collisions.
+if (typeof window !== 'undefined') {
+  const legacyStorageKey = 'resqnet-auth-token'
+  const hasScopedToken = !!localStorage.getItem(authStorageKey)
+  if (!hasScopedToken && localStorage.getItem(legacyStorageKey)) {
+    localStorage.removeItem(legacyStorageKey)
+  }
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'resqnet-auth-token' // Explicitly set storage key to ensure consistency across tabs
+    storageKey: authStorageKey
   }
 })
 
@@ -73,7 +90,7 @@ return handleAuthLock(async () => {
             error?.message?.includes('Invalid Refresh Token')) {
           console.warn('[Supabase] Refresh token error - clearing stored session')
           // Clear the corrupted session from storage
-          localStorage.removeItem('resqnet-auth-token')
+          localStorage.removeItem(authStorageKey)
           return { data: null, error: null } // Return clean state instead of error
         }
         

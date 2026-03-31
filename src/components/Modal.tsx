@@ -23,7 +23,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, maxWid
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" 
@@ -32,10 +32,10 @@ export default function Modal({ isOpen, onClose, title, children, footer, maxWid
       />
       
       {/* Modal Dialog */}
-      <div className={`bg-white rounded-2xl shadow-2xl relative w-full ${maxWidth} flex flex-col transform transition-all animate-in fade-in zoom-in duration-200`}>
+      <div className={`bg-white rounded-xl sm:rounded-2xl shadow-2xl relative w-full ${maxWidth} flex flex-col transform transition-all animate-in fade-in zoom-in duration-200`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+          <h2 className="text-base sm:text-xl font-bold text-gray-900">{title}</h2>
           <button 
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
@@ -45,13 +45,13 @@ export default function Modal({ isOpen, onClose, title, children, footer, maxWid
         </div>
         
         {/* Body */}
-        <div className="px-4 sm:px-6 py-6 overflow-y-auto max-h-[70vh]">
+        <div className="px-4 sm:px-6 py-4 sm:py-6 overflow-y-auto max-h-[65vh]">
           {children}
         </div>
         
         {/* Footer */}
         {footer && (
-          <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl sm:rounded-b-2xl flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3">
             {footer}
           </div>
         )}

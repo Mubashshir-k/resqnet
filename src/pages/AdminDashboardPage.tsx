@@ -262,7 +262,7 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 py-8 pb-24 md:pb-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h1>
         <div className="mb-8 flex items-center gap-3 flex-wrap">
           <p className="text-gray-600 dark:text-gray-400">Manage incidents and assign volunteers</p>
@@ -329,12 +329,12 @@ export default function AdminDashboardPage() {
                     onClick={() => setSelectedReport(report)}
                     className={`cursor-pointer p-4 rounded-lg border transition-all ${
                       selectedReport?.id === report.id
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 bg-white hover:border-primary-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-slate-900/85 dark:ring-1 dark:ring-primary-500/40'
+                        : 'border-gray-200 bg-white dark:bg-slate-900/60 dark:border-slate-800 hover:border-primary-300 dark:hover:border-primary-600'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold text-gray-900 min-w-0 break-words">{report.title}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100 min-w-0 break-words">{report.title}</h3>
                       <span className={`text-xs font-semibold px-2 py-1 rounded capitalize ${
                         report.status === 'pending'
                           ? 'bg-orange-100 text-orange-800'
@@ -345,9 +345,9 @@ export default function AdminDashboardPage() {
                         {report.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{report.description.substring(0, 100)}...</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{report.description.substring(0, 100)}...</p>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500">{report.category}</span>
+                      <span className="text-gray-500 dark:text-gray-400">{report.category}</span>
                       <span className={`font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${
                         report.priority_score >= 70 ? 'bg-red-100 text-red-800' :
                         report.priority_score >= 40 ? 'bg-orange-100 text-orange-800' :
@@ -495,29 +495,19 @@ export default function AdminDashboardPage() {
         isOpen={!!reportToDelete}
         onClose={() => setReportToDelete(null)}
         title="Delete Incident Report"
+        maxWidth="max-w-sm"
         footer={
           <>
-            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setReportToDelete(null)}>Cancel</Button>
-            <Button className="w-full sm:w-auto !bg-red-600 hover:!bg-red-700 !text-white" onClick={executeDelete}>Yes, Delete Report</Button>
+            <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => setReportToDelete(null)}>Cancel</Button>
+            <Button className="w-full sm:w-auto !bg-red-600 hover:!bg-red-700 !text-white" size="sm" onClick={executeDelete}>Yes, Delete Report</Button>
           </>
         }
       >
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-600 text-sm sm:text-base mb-2 sm:mb-4">
           Are you absolutely sure you want to delete this incident report? This action is permanent and cannot be undone.
         </p>
       </Modal>
 
-      {selectedReport && (selectedReport.status === 'pending' || justAssignedReportId === selectedReport.id) && (
-        <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white/95 backdrop-blur border-t border-gray-200 p-3 z-40">
-          <Button
-            onClick={() => handleAssignVolunteer(selectedReport.id, assigningTo)}
-            className="w-full"
-            disabled={!assigningTo || assigningReportId === selectedReport.id || selectedReport.status !== 'pending'}
-          >
-            {justAssignedReportId === selectedReport.id ? 'Assigned!' : 'Assign Volunteer'}
-          </Button>
-        </div>
-      )}
     </div>
   )
 }
