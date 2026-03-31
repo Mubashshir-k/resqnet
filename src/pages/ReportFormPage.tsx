@@ -96,7 +96,11 @@ export default function ReportFormPage() {
     }
 
     setGettingLocation(true)
-    console.log('[ReportForm] Requesting GPS location with 10s timeout...')
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+    const timeoutMs = 20000
+    console.log(`[ReportForm] Requesting GPS location with ${timeoutMs / 1000}s timeout...`)
     
     let watchId: number | null = null
     
@@ -107,7 +111,7 @@ export default function ReportFormPage() {
       }
       setError('Location request timed out. Please try again or click on the map.')
       setGettingLocation(false)
-    }, 10000)
+    }, timeoutMs)
     
     watchId = navigator.geolocation.watchPosition(
       (position) => {
@@ -150,9 +154,11 @@ export default function ReportFormPage() {
         setGettingLocation(false)
       },
       {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
+        // High accuracy can take longer on some mobile devices; avoid blocking too long.
+        enableHighAccuracy: !isMobile,
+        timeout: timeoutMs,
+        // Allow a recently cached fix to speed up location retrieval.
+        maximumAge: 5000,
       }
     )
   }
