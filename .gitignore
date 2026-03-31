@@ -22,6 +22,8 @@ node_modules
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.example
 
 npm-lerna-debug.log*
 

@@ -1,10 +1,32 @@
-import { OpenAI } from 'openai'
 import { AIAnalysisResult } from '@/types'
 
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
-  dangerouslyAllowBrowser: true,
-})
+// Gemini call is done directly from the browser.
+// NOTE: This exposes your API key to users. For production, route through a backend proxy.
+const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
+const geminiModel = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
+
+function extractTextFromGeminiResponse(data: any): string {
+  const parts = data?.candidates?.[0]?.content?.parts
+  if (!Array.isArray(parts)) return ''
+
+  return parts
+    .map((p: any) => (typeof p?.text === 'string' ? p.text : ''))
+    .join('')
+    .trim()
+}
+
+function extractJsonFromText(maybeJsonText: string): string {
+  let jsonStr = maybeJsonText.trim()
+
+  // Extract JSON from markdown code blocks if present
+  if (jsonStr.includes('```json')) {
+    jsonStr = jsonStr.split('```json')[1]?.split('```')[0]?.trim() || jsonStr
+  } else if (jsonStr.includes('```')) {
+    jsonStr = jsonStr.split('```')[1]?.split('```')[0]?.trim() || jsonStr
+  }
+
+  return jsonStr
+}
 
 function localFallbackAnalysis(description: string): AIAnalysisResult {
   const desc = description.toLowerCase()
@@ -51,49 +73,69 @@ function localFallbackAnalysis(description: string): AIAnalysisResult {
 
 export async function analyzeDisasterReport(description: string): Promise<AIAnalysisResult> {
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: `You are an AI disaster response analyst. Analyze the following disaster report and respond ONLY with a valid JSON object (no markdown, no code blocks, no extra text) with this exact structure:
+    if (!geminiApiKey) {
+      console.warn('[Gemini] Missing VITE_GEMINI_API_KEY. Using fallback analysis.')
+      return localFallbackAnalysis(description)
+    }
+
+    const systemPrompt = `You are an AI disaster response analyst.
+Analyze the following disaster report and respond ONLY with a valid JSON object (no markdown, no code blocks, no extra text) with this exact structure:
 {
   "category": "fire" | "medical" | "accident" | "flood" | "other",
   "priority_score": 0-100,
   "reason": "short explanation"
-}`,
+}`
+
+    const userPrompt = `Analyze this disaster report: ${description}`
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent?key=${encodeURIComponent(geminiApiKey)}`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          { role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] },
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 300,
         },
-        {
-          role: 'user',
-          content: `Analyze this disaster report: ${description}`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 300,
+      }),
     })
 
-    const content = response.choices[0]?.message?.content || ''
-    let jsonStr = content.trim()
+    const payload = await response.json().catch(() => null)
+    const contentText = extractTextFromGeminiResponse(payload)
 
-    // Extract JSON from markdown code blocks if present
-    if (jsonStr.includes('```json')) {
-      jsonStr = jsonStr.split('```json')[1]?.split('```')[0]?.trim() || jsonStr
-    } else if (jsonStr.includes('```')) {
-      jsonStr = jsonStr.split('```')[1]?.split('```')[0]?.trim() || jsonStr
+    if (!response.ok) {
+      const msg = payload?.error?.message || `Gemini request failed with status ${response.status}`
+      const isQuotaError =
+        response.status === 429 ||
+        String(msg).toLowerCase().includes('quota') ||
+        String(msg).toLowerCase().includes('resource exhausted')
+
+      if (isQuotaError) {
+        console.warn('ℹ️ Gemini quota exceeded. Using keyword-based analysis fallback.')
+        return localFallbackAnalysis(description)
+      }
+
+      console.error('Gemini request failed:', msg)
+      return localFallbackAnalysis(description)
     }
 
-    // Parse the JSON response
+    const jsonStr = extractJsonFromText(contentText)
+
     let result: AIAnalysisResult
     try {
       result = JSON.parse(jsonStr)
     } catch (parseError) {
-      console.error('Failed to parse JSON:', jsonStr, parseError)
+      console.error('Failed to parse Gemini JSON:', jsonStr, parseError)
       throw parseError
     }
 
-    // Validate the result
     if (
       !['fire', 'medical', 'accident', 'flood', 'other'].includes(result.category) ||
+      typeof result.priority_score !== 'number' ||
       result.priority_score < 0 ||
       result.priority_score > 100 ||
       !result.reason
@@ -103,14 +145,18 @@ export async function analyzeDisasterReport(description: string): Promise<AIAnal
 
     return result
   } catch (error: any) {
-    const isQuotaError = error?.status === 429 || error?.message?.includes('quota') || error?.code === 'insufficient_quota'
-    
-      if (isQuotaError) {
-        // Log a subtle message since we handle it with a fallback
-        console.warn('ℹ️ OpenAI Quota Exceeded. Using keyword-based analysis fallback.');
-      } else {
-        console.error('AI Analysis Error:', error);
-      }
-      return localFallbackAnalysis(description);
+    const msg = String(error?.message || error)
+    const isQuotaError =
+      msg.toLowerCase().includes('quota') ||
+      msg.toLowerCase().includes('resource exhausted') ||
+      error?.status === 429
+
+    if (isQuotaError) {
+      console.warn('ℹ️ Gemini quota exceeded. Using keyword-based analysis fallback.')
+    } else {
+      console.error('AI Analysis Error (Gemini):', error)
+    }
+
+    return localFallbackAnalysis(description)
   }
 }

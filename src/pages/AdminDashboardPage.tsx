@@ -337,10 +337,10 @@ export default function AdminDashboardPage() {
                       <h3 className="font-bold text-gray-900 dark:text-gray-100 min-w-0 break-words">{report.title}</h3>
                       <span className={`text-xs font-semibold px-2 py-1 rounded capitalize ${
                         report.status === 'pending'
-                          ? 'bg-orange-100 text-orange-800'
+                          ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
                           : report.status === 'assigned'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
                       }`}>
                         {report.status}
                       </span>
@@ -349,9 +349,9 @@ export default function AdminDashboardPage() {
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-500 dark:text-gray-400">{report.category}</span>
                       <span className={`font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                        report.priority_score >= 70 ? 'bg-red-100 text-red-800' :
-                        report.priority_score >= 40 ? 'bg-orange-100 text-orange-800' :
-                        'bg-green-100 text-green-800'
+                        report.priority_score >= 70 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200' :
+                        report.priority_score >= 40 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200' :
+                        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
                       }`}>
                         {report.priority_score >= 70 ? '🔴 High' : report.priority_score >= 40 ? '🟡 Medium' : '🟢 Low'}
                       </span>
@@ -495,15 +495,15 @@ export default function AdminDashboardPage() {
         isOpen={!!reportToDelete}
         onClose={() => setReportToDelete(null)}
         title="Delete Incident Report"
-        maxWidth="max-w-sm"
+        maxWidth="max-w-lg"
         footer={
           <>
-            <Button className="w-full sm:w-auto" size="sm" variant="outline" onClick={() => setReportToDelete(null)}>Cancel</Button>
-            <Button className="w-full sm:w-auto !bg-red-600 hover:!bg-red-700 !text-white" size="sm" onClick={executeDelete}>Yes, Delete Report</Button>
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setReportToDelete(null)}>Cancel</Button>
+            <Button className="w-full sm:w-auto !bg-red-600 hover:!bg-red-700 !text-white" onClick={executeDelete}>Yes, Delete Report</Button>
           </>
         }
       >
-        <p className="text-gray-600 text-sm sm:text-base mb-2 sm:mb-4">
+        <p className="text-gray-600 mb-4">
           Are you absolutely sure you want to delete this incident report? This action is permanent and cannot be undone.
         </p>
       </Modal>
